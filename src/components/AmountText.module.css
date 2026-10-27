@@ -1,0 +1,58 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sb-space-2);
+  min-width: 0;
+}
+
+.value {
+  display: inline-block;
+  min-width: 9ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.02em;
+  font-weight: var(--sb-weight-semibold);
+  color: var(--sb-ink);
+  line-height: var(--sb-leading-tight);
+  white-space: nowrap;
+}
+
+.md {
+  font-size: var(--sb-text-lg);
+}
+
+.lg {
+  font-size: var(--sb-text-2xl);
+}
+
+.xl {
+  font-size: var(--sb-text-3xl);
+}
+
+.up {
+  color: var(--sb-gain);
+}
+
+.down {
+  color: var(--sb-loss);
+}
+
+.mask {
+  letter-spacing: 0.12em;
+  color: var(--sb-ink-2);
+}
+
+.toggle {
+  /* Visual icon stays 16px, but the hit area must stay at least 44×44. */
+  width: var(--sb-touch-target);
+  height: var(--sb-touch-target);
+  min-height: var(--sb-touch-target);
+  border-radius: var(--sb-radius-sm);
+  color: var(--sb-muted);
+  flex: none;
+}
+
+.toggle:hover {
+  color: var(--sb-ink);
+}

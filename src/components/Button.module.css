@@ -1,0 +1,104 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sb-space-2);
+  min-height: var(--sb-touch-target);
+  padding: 0 var(--sb-space-5);
+  border: var(--sb-border-width) solid transparent;
+  border-radius: var(--sb-radius-md);
+  font-family: inherit;
+  font-size: var(--sb-text-md);
+  font-weight: var(--sb-weight-semibold);
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background var(--sb-duration-fast) var(--sb-ease-standard),
+    border-color var(--sb-duration-fast) var(--sb-ease-standard),
+    color var(--sb-duration-fast) var(--sb-ease-standard),
+    transform var(--sb-duration-fast) var(--sb-ease-standard);
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  opacity: var(--sb-disabled-opacity);
+}
+
+.primary {
+  background: var(--sb-brand);
+  color: var(--sb-brand-contrast);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--sb-brand-strong);
+}
+
+.secondary {
+  background: var(--sb-surface-raised);
+  border-color: var(--sb-line-strong);
+  color: var(--sb-ink);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--sb-surface);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--sb-ink-2);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--sb-hover);
+}
+
+.danger {
+  background: var(--sb-danger);
+  color: var(--sb-on-danger);
+}
+
+.danger:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.lg {
+  min-height: 52px;
+  font-size: var(--sb-text-lg);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: sb-spin 700ms linear infinite;
+  flex: none;
+}
+
+.iconButton {
+  width: var(--sb-touch-target);
+  height: var(--sb-touch-target);
+  min-height: var(--sb-touch-target);
+  padding: 0;
+  border-radius: var(--sb-radius-md);
+  flex: none;
+}
+
+.iconButton.secondary {
+  background: var(--sb-surface-raised);
+}
+
+@keyframes sb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

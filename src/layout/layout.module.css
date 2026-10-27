@@ -1,0 +1,127 @@
+.page {
+  max-width: var(--sb-app-max);
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--sb-canvas);
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--sb-space-4) var(--sb-space-4) calc(96px + var(--sb-safe-bottom));
+}
+
+.main:focus {
+  outline: none;
+}
+
+.withoutNav {
+  padding-bottom: var(--sb-space-6);
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  background: var(--sb-brand);
+  color: var(--sb-brand-contrast);
+  padding: var(--sb-space-3) var(--sb-space-4);
+  border-radius: 0 0 var(--sb-radius-md) 0;
+  font-weight: var(--sb-weight-semibold);
+  text-decoration: none;
+}
+
+.skip:focus {
+  left: 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-4);
+  min-width: 0;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-2);
+}
+
+.introTitle {
+  font-size: var(--sb-text-xl);
+  font-weight: var(--sb-weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--sb-leading-tight);
+}
+
+.introText {
+  font-size: var(--sb-text-sm);
+  color: var(--sb-muted);
+  line-height: var(--sb-leading-normal);
+}
+
+.hint {
+  font-size: var(--sb-text-xs);
+  color: var(--sb-muted);
+  line-height: var(--sb-leading-normal);
+}
+
+.sectionCard {
+  padding: var(--sb-space-4);
+  background: var(--sb-surface);
+  border: var(--sb-border-width) solid var(--sb-line);
+  border-radius: var(--sb-radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-3);
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sb-space-3);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sb-space-2);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-space-3);
+  min-width: 0;
+}
+
+.sectionLabel {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sb-faint);
+}
+
+.badge {
+  font-family: var(--sb-font-mono);
+  font-size: var(--sb-text-2xs);
+  letter-spacing: 0.04em;
+  color: var(--sb-muted);
+  background: var(--sb-surface);
+  border: var(--sb-border-width) solid var(--sb-line);
+  border-radius: var(--sb-radius-pill);
+  padding: 3px 8px;
+}
+
+/* Entry button carried by ListItem; full 44px hit area, chevron aligned. */
+.entryValue {
+  color: var(--sb-copper-deep);
+}
