@@ -35,10 +35,9 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      # Pages 部署在 /safebank-ui/ 子路径，用 --base 覆盖，避免改配置引入 Node 类型依赖
       - name: Build
-        run: pnpm run build
-        env:
-          GITHUB_PAGES: 'true'
+        run: pnpm exec vite build --base=/safebank-ui/
 
       # 前端使用 createBrowserRouter（history 模式），
       # Pages 无 SPA 回退，深链接刷新会 404 —— 用 404.html 兜底。
