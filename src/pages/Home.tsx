@@ -196,7 +196,13 @@ export function HomePage() {
   useEffect(() => {
     if (scrollRestoreStartedRef.current) return;
     scrollRestoreStartedRef.current = true;
-    const path = window.location.pathname;
+    // 与路由侧保持一致的路径口径：BASE_URL 非根时去掉子路径前缀
+    const base = import.meta.env.BASE_URL || '/';
+    const rawPath = window.location.pathname;
+    const path =
+      base !== '/' && rawPath.startsWith(base)
+        ? '/' + rawPath.slice(base.length)
+        : rawPath;
     if (!isVisitedPath(path)) return;
     const target = getScroll(path);
     if (target <= 0) return;
