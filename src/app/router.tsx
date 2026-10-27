@@ -95,6 +95,12 @@ export const routes: RouteObject[] = [
   },
 ];
 
+// GitHub Pages 部署在 /<repo>/ 子路径下；Vite 会把 base 注入 BASE_URL（本地为 '/'）。
+// react-router 的 basename 不需要末尾斜杠，因此去掉（根路径时保持 '/'）。
+const BASE_URL = import.meta.env.BASE_URL || '/';
+const BASENAME = BASE_URL === '/' ? '/' : BASE_URL.replace(/\/$/, '');
+
 export const router = createBrowserRouter(routes, {
+  basename: BASENAME,
   future: { v7_relativeSplatPath: true },
 });
