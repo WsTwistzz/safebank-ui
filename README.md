@@ -25,3 +25,14 @@ pnpm test
 ## 体验优化分支
 
 `design/safebank-refined-experience` 保留原有服务、会话与安全授权流程，统一黑白金视觉、资产分布面板、持久化金额隐私、交易筛选、玻璃导航及银行卡卡面。生产构建隐藏故障注入控制，开发环境仍可使用。设计与验证说明见 `docs/design/`。
+
+### 本地预览 GitHub Pages 构建
+
+```sh
+pnpm build:pages
+pnpm preview:pages
+# 另一个终端检查脚本、样式实际返回正确类型（而非 200 HTML 回退）：
+pnpm verify:preview
+```
+
+打开 `http://127.0.0.1:4180/safebank-ui/`。Pages 构建与预览必须使用一致的 `/safebank-ui/` 前缀。不要用默认根路径的 preview 服务查看子目录构建，否则资源请求可能落入 HTML 回退并出现空白页。
