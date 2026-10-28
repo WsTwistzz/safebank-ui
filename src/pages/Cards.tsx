@@ -238,16 +238,19 @@ export function CardsPage() {
             const badge = statusBadge(card);
             return (
               <div className={cstyles.card} key={card.id} data-sb-sheen>
-                <div className={cstyles.cardHead}>
-                  <span className={cstyles.cardTitle}>{card.name}</span>
-                  <span className={`${cstyles.statusBadge} ${badge.cls}`}>{badge.text}</span>
+                <div className={cstyles.cardFace}>
+                  <span className={cstyles.cardArt} aria-hidden="true">S</span>
+                  <div className={cstyles.cardHead}>
+                    <span className={cstyles.cardTitle}>{card.name}</span>
+                    <span className={`${cstyles.statusBadge} ${badge.cls}`}>{badge.text}</span>
+                  </div>
+                  <span className={cstyles.chip} aria-hidden="true"><i /><i /><i /></span>
+                  <span className={cstyles.cardNumber}>{card.maskedNumber}</span>
+                  <div className={cstyles.statusRow}>
+                    <span>有效期 {card.expiry}</span><span className={cstyles.cardWordmark}>SafeBank</span>
+                  </div>
                 </div>
-                <span className={cstyles.cardNumber}>{card.maskedNumber}</span>
-                <div className={cstyles.statusRow}>
-                  <span>有效期 {card.expiry}</span>
-                  <span>线上支付 {card.onlinePayEnabled ? '已开启' : '已关闭'}</span>
-                  {card.expiringSoon ? <span>近期到期，建议留意换卡</span> : null}
-                </div>
+                <div className={cstyles.cardMeta}><Icon name="shield" size={14} /><span>线上支付 {card.onlinePayEnabled ? '已开启' : '已关闭'}</span>{card.expiringSoon ? <span>近期到期，请留意换卡</span> : null}</div>
                 <div className={cstyles.ops}>
                   {card.availableOperations.map((op) => (
                     <Button
@@ -274,7 +277,7 @@ export function CardsPage() {
         </div>
       ) : null}
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={cstyles.demoPanel} aria-label="演示场景（仅演示）">
           <span className={styles.sectionLabel}>演示场景（仅演示）</span>
           <div className={cstyles.demoGrid}>

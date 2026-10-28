@@ -131,3 +131,11 @@ a {
     scroll-behavior: auto !important;
   }
 }
+
+/* Native-feeling input and motion defaults. */
+input, select, textarea { font-size: max(16px, 1em); }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+img, video { max-width: 100%; }
+@media (min-width: 431px) { body { padding: 20px; } }
+@media (prefers-reduced-transparency: reduce) { [data-sb-sheen]::after { display: none; } }

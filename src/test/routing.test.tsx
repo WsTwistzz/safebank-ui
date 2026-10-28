@@ -94,6 +94,7 @@ function seedSession() {
 
 /** 用默认客户张三的演示 PIN（111111）登录；6 位自动提交。 */
 async function demoLogin(user: ReturnType<typeof userEvent.setup>) {
+  await waitFor(() => expect(screen.getByRole('button', { name: '1' })).toBeEnabled());
   for (const digit of ['1', '1', '1', '1', '1', '1']) {
     await user.click(screen.getByRole('button', { name: digit }));
   }

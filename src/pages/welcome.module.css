@@ -13,7 +13,7 @@
 /* 桌面演示：与其它页面一致的居中手机屏外观 */
 @media (min-width: 431px) {
   .page {
-    max-height: var(--sb-app-height);
+    max-height: min(var(--sb-app-height), calc(100dvh - 40px));
     border-radius: 38px;
     box-shadow:
       0 34px 66px -22px rgba(17, 19, 24, 0.38),

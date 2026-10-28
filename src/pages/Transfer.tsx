@@ -293,7 +293,7 @@ export function TransferPage() {
         ) : null}
       </div>
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={tstyles.demoPanel} aria-label="演示场景（仅演示）">
           <div className={tstyles.demoHead}>
             <Icon name="info" size={14} />

@@ -230,3 +230,23 @@
   text-align: center;
   overflow-wrap: anywhere;
 }
+/* A quiet, clearly marked demo gateway. */
+.page { width:min(100%,var(--sb-app-max)); min-height:min(100dvh,860px); padding:32px 24px 24px; background:var(--sb-canvas); }
+.screen { gap:13px; }
+.brand { padding:10px 0 24px; gap:9px; }
+.logo { width:35px; height:35px; border-radius:12px; font-size:13px; color:var(--sb-gold); }
+.brandName { font-size:18px; letter-spacing:-.04em; }
+.brandSub { font-size:9px; letter-spacing:.09em; margin-top:3px; }
+.hello { padding-bottom:15px; }
+.helloTitle { font-size:28px; letter-spacing:-.05em; line-height:1.3; }
+.helloSub { font-size:12px; margin-top:7px; }
+.cust { min-height:73px; padding:15px; border-radius:20px; border-color:var(--sb-line); transition:background .2s,border-color .2s; }
+.custOn { border-color:var(--sb-gold-deep); background:var(--sb-surface-raised); box-shadow:0 0 0 2px color-mix(in srgb,var(--sb-gold) 22%,transparent); }
+.av { width:39px; height:39px; border-radius:14px; background:var(--sb-brand-soft); color:var(--sb-ink); }
+.pinRow { padding:22px 4px 12px; }
+.dot { width:11px; height:11px; }
+.keypad { gap:8px; }.key { border-color:transparent; border-radius:18px; font-size:23px; min-height:58px; background:var(--sb-surface-raised); transition:transform .17s,background .17s; }.key:active { transform:scale(.95); background:var(--sb-brand-soft); }
+@media (min-width:431px) { .page { border-radius:38px; max-height:calc(100dvh - 40px); overflow-y:auto; box-shadow:0 25px 65px -25px #11131855; } }
+@media (prefers-reduced-motion:reduce) { .key,.cust { transition:none; } }
+
+.logo { background:transparent; color:var(--sb-ink); }

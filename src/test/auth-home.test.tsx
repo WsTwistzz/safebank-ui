@@ -59,6 +59,7 @@ function renderLogin(auth: AuthService) {
 }
 
 async function typePin(user: ReturnType<typeof userEvent.setup>, digits: string) {
+  await waitFor(() => expect(screen.getByRole('button', { name: '1' })).toBeEnabled());
   for (const d of digits.split('')) {
     await user.click(screen.getByRole('button', { name: d }));
   }
@@ -320,19 +321,19 @@ describe('首页聚合', () => {
 
   it('按当前客户显示身份与总资产（张三 26,000 / 李四含理财持仓）', async () => {
     const view = renderHome(homeService());
-    expect(await screen.findByText(/张三 · Everyday/)).toBeInTheDocument();
+    expect(await screen.findByText(/你好，张三/)).toBeInTheDocument();
     expect(await screen.findByTestId('home-total')).toHaveTextContent('26,000.00');
     expect(screen.getByTestId('home-current')).toHaveTextContent('6,000.00');
     expect(screen.getByTestId('home-savings')).toHaveTextContent('20,000.00');
     view.unmount();
 
     renderHome(homeService(), { customerId: 'cust-li', customerName: '李四' });
-    expect(await screen.findByText(/李四 · Everyday/)).toBeInTheDocument();
+    expect(await screen.findByText(/你好，李四/)).toBeInTheDocument();
     expect(await screen.findByTestId('home-total')).toHaveTextContent('154,560.30');
   });
 
   it('金额隐私覆盖总资产、活期储蓄、待扣、交易与账单', async () => {
-    // 首页不再放隐私开关（与目标一致），开关在理财页；这里直接写入偏好
+    // 已保存的金额隐私偏好在首次渲染时即生效。
     window.localStorage.setItem('sb-amount-hidden', '1');
     renderHome(homeService());
     await screen.findByText(/未来 7 天有/);
@@ -341,6 +342,39 @@ describe('首页聚合', () => {
     expect(screen.getByTestId('home-current')).toHaveTextContent('••••');
     expect(screen.queryAllByText(/¥\d/).length).toBe(0);
     expect(screen.getAllByText(/••••/).length).toBeGreaterThan(0);
+  });
+
+  it('金额开关立即遮盖资产与交易，并持久化；明细面板遵循隐私偏好', async () => {
+    const user = userEvent.setup();
+    renderHome(homeService());
+    await screen.findByTestId('home-total');
+    await user.click(screen.getByRole('button', { name: '隐藏金额' }));
+    expect(screen.getByTestId('home-total')).toHaveTextContent('••••');
+    expect(window.localStorage.getItem('sb-amount-hidden')).toBe('1');
+    await user.click(screen.getByRole('button', { name: '查看资产分布' }));
+    const dialog = screen.getByRole('dialog', { name: '资产分布' });
+    expect(dialog).not.toHaveTextContent('26,000');
+    expect(dialog).not.toHaveTextContent('20,000');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '显示金额' }));
+    expect(screen.getByTestId('home-total')).toHaveTextContent('26,000.00');
+  });
+
+  it('资产分布展示各真实账户金额，收入支出筛选可以切换', async () => {
+    const user = userEvent.setup();
+    renderHome(homeService());
+    await screen.findByText('全家便利店');
+    await user.click(screen.getByRole('button', { name: '查看资产分布' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('¥26,000.00');
+    expect(screen.getByRole('dialog')).toHaveTextContent('¥6,000.00');
+    expect(screen.getByRole('dialog')).toHaveTextContent('¥20,000.00');
+    await user.keyboard('{Escape}');
+    await user.click(screen.getByRole('button', { name: '收入' }));
+    expect(screen.getByRole('button', { name: '收入' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByText('全家便利店')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '全部' }));
+    expect(screen.getByText('全家便利店')).toBeInTheDocument();
   });
 
   it('待扣与订阅 service 一致，最近交易与账单一致', async () => {
@@ -390,7 +424,7 @@ describe('首页聚合', () => {
     renderHome(homeService());
     await screen.findByTestId('home-total');
 
-    await user.click(screen.getByRole('button', { name: /理财收益/ }));
+    await user.click(screen.getByRole('button', { name: '理财' }));
     await waitFor(() => expect(currentPath).toBe('/wealth'));
   });
 
@@ -600,10 +634,10 @@ describe('首页客户切换', () => {
     // 李四数据未返回前：不得出现张三的任何事实数据
     await waitFor(() => expect(screen.queryByText('¥26,000.00')).not.toBeInTheDocument());
     expect(screen.queryByText('张三流水')).not.toBeInTheDocument();
-    expect(screen.queryByText(/张三 · Everyday/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/你好，张三/)).not.toBeInTheDocument();
     expect(screen.getByText(/正在加载资产/)).toBeInTheDocument();
     // 顶部身份使用当前会话客户，而不是旧 summary
-    expect(screen.getByText(/李四 · Everyday/)).toBeInTheDocument();
+    expect(screen.getByText(/你好，李四/)).toBeInTheDocument();
 
     act(() => {
       service.resolveSummary('cust-li', summaryFor('cust-li', '李四', 15_456_030));
@@ -622,13 +656,13 @@ describe('首页客户切换', () => {
     renderSwitchable(service);
 
     await user.click(screen.getByRole('button', { name: '切到李四' }));
-    expect(screen.getByText(/李四 · Everyday/)).toBeInTheDocument();
+    expect(screen.getByText(/你好，李四/)).toBeInTheDocument();
 
     act(() => {
       service.resolveSummary('cust-zhang', summaryFor('cust-zhang', '张三', 2_600_000));
     });
     await waitFor(() => expect(screen.queryByText('¥26,000.00')).not.toBeInTheDocument());
-    expect(screen.queryByText(/张三 · Everyday/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/你好，张三/)).not.toBeInTheDocument();
 
     act(() => {
       service.resolveSummary('cust-li', summaryFor('cust-li', '李四', 15_456_030));
