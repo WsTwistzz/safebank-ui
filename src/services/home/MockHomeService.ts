@@ -33,8 +33,6 @@ export const DEFAULT_HOME_SCENARIO: MockHomeScenario = {
  * 需要回到纯客户真实 mock 数据时，把构造参数 targetDefaults 设为 false。
  */
 const TARGET_DEFAULTS = {
-  /** 张三：活期 6,000.00 + 储蓄 20,000.00 = 总资产 26,000.00 */
-  zhang: { currentCents: 600000, savingsCents: 2000000 },
   upcoming: { count: 2, totalCents: 4500, sourceSummary: '云音乐、视频会员' },
   recent: [
     { id: 'tx-coffee', name: '山野咖啡', time: '今天 9:12', category: '餐饮', amountCents: -680, direction: 'out' as const },
@@ -109,14 +107,9 @@ export class MockHomeService implements HomeService {
 
     const accounts = await this.deps.transfer.listAccounts();
     const usable = accounts.filter((a) => customer.accountIds.includes(a.id));
-    let currentCents = usable.find((a) => a.id === 'acc-current')?.availableCents ?? 0;
-    let savingsCents = usable.find((a) => a.id === 'acc-savings')?.availableCents ?? 0;
+    const currentCents = usable.find((a) => a.id === 'acc-current')?.availableCents ?? 0;
+    const savingsCents = usable.find((a) => a.id === 'acc-savings')?.availableCents ?? 0;
 
-    // 目标简报默认场景：张三 活期 6,000.00 / 储蓄 20,000.00
-    if (this.targetDefaults && customerId === 'cust-zhang') {
-      currentCents = TARGET_DEFAULTS.zhang.currentCents;
-      savingsCents = TARGET_DEFAULTS.zhang.savingsCents;
-    }
 
     let wealthCents = 0;
     let holdingProductCount = 0;

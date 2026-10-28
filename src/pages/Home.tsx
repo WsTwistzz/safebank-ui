@@ -327,7 +327,7 @@ export function HomePage() {
 
         {summary ? (
           <>
-            <div className={h.amount}>
+            <div className={h.amount} data-testid="home-total">
               {hidden ? (
                 '••••'
               ) : (
@@ -338,9 +338,9 @@ export function HomePage() {
               )}
             </div>
             <div className={h.subRow}>
-              <span>活期 {plainAmount(summary.currentCents)}</span>
+              <span data-testid="home-current">活期 {plainAmount(summary.currentCents)}</span>
               <span aria-hidden="true">·</span>
-              <span>储蓄 {plainAmount(summary.savingsCents)}</span>
+              <span data-testid="home-savings">储蓄 {plainAmount(summary.savingsCents)}</span>
             </div>
             <div className={h.statusRow}>
               <div className={h.statusMain}>

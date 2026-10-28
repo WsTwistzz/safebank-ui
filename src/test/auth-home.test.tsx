@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -20,11 +20,8 @@ import { MockTransferService } from '../services/transfer/MockTransferService';
 import { MockWealthService } from '../services/wealth/MockWealthService';
 
 let currentPath = '/';
-let currentIntent: unknown;
 function Probe() {
-  const location = useLocation();
-  currentPath = location.pathname;
-  currentIntent = (location.state as { intent?: unknown } | null)?.intent;
+  currentPath = useLocation().pathname;
   return null;
 }
 
@@ -66,7 +63,12 @@ async function typePin(user: ReturnType<typeof userEvent.setup>, digits: string)
   }
 }
 
-function homeService(overrides?: { emptyRecent?: boolean; emptyUpcoming?: boolean; now?: number }) {
+function homeService(
+  overrides?: { emptyRecent?: boolean; emptyUpcoming?: boolean; now?: number },
+  // 首页聚合测试校验「UI 与 Service 一致」，因此使用原始 mock 数据；
+  // 目标简报默认场景另有专门用例。
+  targetDefaults = false,
+) {
   const now = overrides?.now ?? Date.parse('2026-11-01T12:00:00Z');
   return new MockHomeService(
     {
@@ -81,6 +83,7 @@ function homeService(overrides?: { emptyRecent?: boolean; emptyUpcoming?: boolea
       emptyUpcoming: overrides?.emptyUpcoming ?? false,
     },
     0,
+    targetDefaults,
   );
 }
 
@@ -112,42 +115,40 @@ describe('欢迎页', () => {
     currentPath = '/welcome';
   });
 
-  it.each(['login', 'register'] as const)('%s 入口保留意图、标记已访问并进入演示登录，不建立会话', (target) => {
+  it('两个入口都只标记已访问并进入登录，不建立会话', async () => {
+    for (const label of ['开始使用', '已有账户？登录']) {
+      window.localStorage.clear();
+      const user = userEvent.setup();
+      const view = renderWelcome();
+      await user.click(screen.getByRole('button', { name: label }));
+      await waitFor(() => expect(currentPath).toBe('/login'));
+      expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
+      expect(window.localStorage.getItem('sb-demo-session')).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it('渲染 SafeBank 品牌、英文标题与中文说明', () => {
     renderWelcome();
-    const welcome = screen.getByLabelText('SafeBank 欢迎页');
-    const event = new CustomEvent('safebank-navigate', {
-      detail: { target, href: '/login' }, bubbles: true, composed: true, cancelable: true,
-    });
-    fireEvent(welcome, event);
-    expect(event.defaultPrevented).toBe(true);
-    expect(currentPath).toBe('/login');
-    expect(currentIntent).toBe(target);
-    expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
-    expect(window.localStorage.getItem('sb-demo-session')).toBeNull();
+    expect(screen.getByText('SafeBank')).toBeInTheDocument();
+    expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument();
+    expect(screen.getByText(/Take control of/)).toBeInTheDocument();
+    expect(screen.getByText(/账户、转账与理财/)).toBeInTheDocument();
   });
 
-  it('提供独立欢迎组件且不加载首页导航', () => {
+  it('不再出现旧投资落地页文案', () => {
     renderWelcome();
-    const welcome = screen.getByLabelText('SafeBank 欢迎页');
-    expect(welcome.tagName).toBe('SAFEBANK-WELCOME');
-    expect(welcome).toHaveAttribute('login-url', '/login');
-    expect(welcome).toHaveAttribute('register-url', '/login');
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    for (const legacy of [
+      'Clear Insights For Smarter Decisions',
+      'Your Investment Space',
+      '100+ Markets',
+      '+2.4M Investors',
+      'Clearvest',
+      '跳过引导',
+    ]) {
+      expect(screen.queryByText(legacy)).not.toBeInTheDocument();
+    }
   });
-
-  it('子目录下两个原生链接均保留部署前缀', () => {
-    render(
-      <SessionProvider initialStatus="anonymous">
-        <MemoryRouter basename="/safebank-ui" initialEntries={['/safebank-ui/welcome']}>
-          <WelcomePage />
-        </MemoryRouter>
-      </SessionProvider>,
-    );
-    const welcome = screen.getByLabelText('SafeBank 欢迎页');
-    expect(welcome).toHaveAttribute('login-url', '/safebank-ui/login');
-    expect(welcome).toHaveAttribute('register-url', '/safebank-ui/login');
-  });
-
 });
 
 describe('演示认证 service', () => {
@@ -308,24 +309,24 @@ describe('首页聚合', () => {
   it('按当前客户显示身份与总资产（张三 26,000 / 李四含理财持仓）', async () => {
     const view = renderHome(homeService());
     expect(await screen.findByText(/张三 · Everyday/)).toBeInTheDocument();
-    expect(await screen.findByText('¥26,000.00')).toBeInTheDocument();
-    expect(screen.getByText('活期 ¥6,000.00')).toBeInTheDocument();
-    expect(screen.getByText('储蓄 ¥20,000.00')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('26,000.00');
+    expect(screen.getByTestId('home-current')).toHaveTextContent('6,000.00');
+    expect(screen.getByTestId('home-savings')).toHaveTextContent('20,000.00');
     view.unmount();
 
     renderHome(homeService(), { customerId: 'cust-li', customerName: '李四' });
     expect(await screen.findByText(/李四 · Everyday/)).toBeInTheDocument();
-    expect(await screen.findByText('¥154,560.30')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('154,560.30');
   });
 
   it('金额隐私覆盖总资产、活期储蓄、待扣、交易与账单', async () => {
-    const user = userEvent.setup();
+    // 首页不再放隐私开关（与目标一致），开关在理财页；这里直接写入偏好
+    window.localStorage.setItem('sb-amount-hidden', '1');
     renderHome(homeService());
-    await screen.findByText('¥26,000.00');
     await screen.findByText(/未来 7 天有/);
 
-    await user.click(screen.getByRole('button', { name: '隐藏金额' }));
-    expect(screen.queryByText('¥26,000.00')).not.toBeInTheDocument();
+    expect(screen.getByTestId('home-total')).toHaveTextContent('••••');
+    expect(screen.getByTestId('home-current')).toHaveTextContent('••••');
     expect(screen.queryAllByText(/¥\d/).length).toBe(0);
     expect(screen.getAllByText(/••••/).length).toBeGreaterThan(0);
   });
@@ -358,24 +359,24 @@ describe('首页聚合', () => {
     expect(await screen.findByText('全家便利店')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '重试' }));
-    expect(await screen.findByText('¥26,000.00')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('26,000.00');
   });
 
   it('离线保留已加载数据并提示不是最新', async () => {
     const user = userEvent.setup();
     const service = homeService();
     renderHome(service);
-    await screen.findByText('¥26,000.00');
+    await screen.findByTestId('home-total');
 
     await user.click(screen.getByRole('button', { name: '离线' }));
     expect(await screen.findByText(/当前离线，已加载内容会保留/)).toBeInTheDocument();
-    expect(screen.getByText('¥26,000.00')).toBeInTheDocument();
+    expect(screen.getByTestId('home-total')).toHaveTextContent('26,000.00');
   });
 
   it('各入口进入正确路由', async () => {
     const user = userEvent.setup();
     renderHome(homeService());
-    await screen.findByText('¥26,000.00');
+    await screen.findByTestId('home-total');
 
     await user.click(screen.getByRole('button', { name: /理财收益/ }));
     await waitFor(() => expect(currentPath).toBe('/wealth'));
@@ -579,7 +580,7 @@ describe('首页客户切换', () => {
         { id: 'z1', name: '张三流水', time: '2026-09-27', category: '购物', amountCents: -1234, direction: 'out' },
       ]);
     });
-    expect(await screen.findByText('¥26,000.00')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('26,000.00');
     expect(screen.getByText('张三流水')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '切到李四' }));
@@ -598,7 +599,7 @@ describe('首页客户切换', () => {
         { id: 'l1', name: '李四流水', time: '2026-09-26', category: '餐饮', amountCents: -2000, direction: 'out' },
       ]);
     });
-    expect(await screen.findByText('¥154,560.30')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('154,560.30');
     expect(screen.getByText('李四流水')).toBeInTheDocument();
     expect(screen.queryByText('张三流水')).not.toBeInTheDocument();
   });
@@ -620,18 +621,18 @@ describe('首页客户切换', () => {
     act(() => {
       service.resolveSummary('cust-li', summaryFor('cust-li', '李四', 15_456_030));
     });
-    expect(await screen.findByText('¥154,560.30')).toBeInTheDocument();
+    expect(await screen.findByTestId('home-total')).toHaveTextContent('154,560.30');
   });
 
   it('同一客户离线重试仍保留已加载数据', async () => {
     const user = userEvent.setup();
     const service = homeService();
     renderHome(service);
-    await screen.findByText('¥26,000.00');
+    await screen.findByTestId('home-total');
 
     await user.click(screen.getByRole('button', { name: '离线' }));
     expect(await screen.findByText(/当前离线，已加载内容会保留/)).toBeInTheDocument();
-    expect(screen.getByText('¥26,000.00')).toBeInTheDocument();
+    expect(screen.getByTestId('home-total')).toHaveTextContent('26,000.00');
     expect(screen.queryByText(/正在加载资产/)).not.toBeInTheDocument();
   });
 });
@@ -647,24 +648,22 @@ describe('金额隐藏与可访问名称', () => {
   });
 
   it('隐藏后待扣与账单按钮的可访问名称不含原始金额', async () => {
-    const user = userEvent.setup();
-    renderHome(homeService());
+    window.localStorage.setItem('sb-amount-hidden', '1');
+    const hiddenView = renderHome(homeService());
 
-    const upcomingBtn = await screen.findByRole('button', { name: /查看未来 7 天待扣款/ });
-    expect(upcomingBtn.getAttribute('aria-label')).toMatch(/合计 ¥[\d,]+\.\d{2}/);
-    const billBtn = await screen.findByRole('button', { name: /查看 2026-09 账单/ });
-    expect(billBtn.getAttribute('aria-label')).toBe('查看 2026-09 账单，本月支出 ¥5,620.40');
-
-    await user.click(screen.getByRole('button', { name: '隐藏金额' }));
-
+    await screen.findByRole('button', { name: /查看未来 7 天待扣款/ });
     // 隐藏状态：任何按钮的可访问名称都不得含金额
     expect(screen.queryByRole('button', { name: /¥\d/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '查看未来 7 天待扣款，共 2 笔，金额已隐藏' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '查看 2026-09 账单，本月支出金额已隐藏' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /5,620\.40/ })).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /本月支出金额已隐藏/ })).toBeInTheDocument();
+    hiddenView.unmount();
 
-    await user.click(screen.getByRole('button', { name: '显示金额' }));
-    expect(screen.getByRole('button', { name: /查看未来 7 天待扣款/ }).getAttribute('aria-label')).toMatch(/¥[\d,]+\.\d{2}/);
-    expect(screen.getByRole('button', { name: /查看 2026-09 账单/ }).getAttribute('aria-label')).toContain('¥5,620.40');
+    // 显示状态：可访问名称重新带上真实金额
+    window.localStorage.removeItem('sb-amount-hidden');
+    renderHome(homeService());
+    const upcomingBtn = await screen.findByRole('button', { name: /查看未来 7 天待扣款/ });
+    expect(upcomingBtn.getAttribute('aria-label')).toMatch(/合计 ¥[\d,]+\.\d{2}/);
+    const billBtn = await screen.findByRole('button', { name: /查看 2026-09 账单/ });
+    expect(billBtn.getAttribute('aria-label')).toContain('¥5,620.40');
   });
 });
