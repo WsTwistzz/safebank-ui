@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useRoutes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,6 +19,10 @@ import { AuthServiceProvider } from '../services/auth/AuthService';
 import { HomeServiceProvider } from '../services/home/HomeService';
 import { clearScrollMemory, getScroll, isVisitedPath, saveScroll } from '../app/scrollMemory';
 import { savePendingApproval } from '../app/viewState';
+import {
+  markWelcomeSeenThisDocument,
+  resetWelcomeLaunchForTests,
+} from '../app/welcomeLaunch';
 
 // 本文件验证路由/会话行为，不验证滚动（由 scrollRestore.test.tsx 负责），
 // 这里把真实 scrollTo 替换为 no-op，避免 jsdom 的 not-implemented 噪音。
@@ -102,6 +106,7 @@ describe('cold start', () => {
     document.documentElement.removeAttribute('data-theme');
     clearScrollMemory();
     currentPathname = '/';
+    resetWelcomeLaunchForTests();
   });
 
   it('does not flash welcome/login/home while resolving', () => {
@@ -114,37 +119,52 @@ describe('cold start', () => {
 
   it('first launch with no session goes to /welcome', async () => {
     renderRouter(['/']);
-    await waitFor(() => expect(screen.getByLabelText('SafeBank 欢迎页')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
   });
 
-  it('visited but no session goes to /login', async () => {
+  it('visited but no session still shows welcome on a fresh document', async () => {
     window.localStorage.setItem('sb-has-visited', '1');
     renderRouter(['/']);
-    await waitFor(() => expect(screen.getByText('选择演示客户')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
   });
 
-  it('valid session goes to /', async () => {
+  it('valid session shows welcome first, then continue returns home', async () => {
+    const user = userEvent.setup();
     seedSession();
     renderRouter(['/']);
-    await waitFor(() => expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: '继续使用' }));
+    await waitFor(() =>
+      expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument(),
+    );
+    expect(currentPathname).toBe('/');
   });
 
-  it('authenticated user visiting /welcome or /login goes to /', async () => {
-    for (const entry of ['/welcome', '/login'] as const) {
-      window.localStorage.clear();
-      window.sessionStorage.clear();
-      seedSession();
-      renderRouter([entry]);
-      await waitFor(() =>
-        expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument(),
-      );
-    }
+  it('authenticated deep link is intercepted by welcome once per document', async () => {
+    const user = userEvent.setup();
+    seedSession();
+    renderRouter(['/login']);
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: '继续使用' }));
+    await waitFor(() => expect(currentPathname).toBe('/'));
+    expect(screen.queryByText('WELCOME TO SAFE BANK')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /理财/ }));
+    expect(currentPathname).toBe('/wealth');
+    expect(screen.queryByText('WELCOME TO SAFE BANK')).not.toBeInTheDocument();
   });
 
-  it('anonymous user on a protected secondary page goes to /login', async () => {
+  it('anonymous user on a protected secondary page sees welcome, then login', async () => {
+    const user = userEvent.setup();
     window.localStorage.setItem('sb-has-visited', '1');
     renderRouter(['/bills'], ANON);
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: '开始使用' }));
     await waitFor(() => expect(screen.getByText('选择演示客户')).toBeInTheDocument());
+    expect(currentPathname).toBe('/login');
   });
 });
 
@@ -155,18 +175,17 @@ describe('navigation', () => {
     document.documentElement.removeAttribute('data-theme');
     clearScrollMemory();
     currentPathname = '/';
+    markWelcomeSeenThisDocument();
   });
 
-  it.each(['login', 'register'] as const)('welcome %s entry writes visited flag and enters demo login', async (target) => {
+  it('welcome action writes visited flag and goes to /login', async () => {
+    const user = userEvent.setup();
+    resetWelcomeLaunchForTests();
     renderRouter(['/']);
-    const welcome = await screen.findByLabelText('SafeBank 欢迎页');
-    const event = new CustomEvent('safebank-navigate', {
-      detail: { target, href: 'https://example.com/ignored' },
-      bubbles: true, composed: true, cancelable: true,
-    });
-    fireEvent(welcome, event);
+    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
 
-    expect(event.defaultPrevented).toBe(true);
+    await user.click(screen.getByRole('button', { name: '开始使用' }));
+
     expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
     expect(screen.getByText('选择演示客户')).toBeInTheDocument();
     expect(currentPathname).toBe('/login');
@@ -299,6 +318,7 @@ describe('view state', () => {
     document.documentElement.removeAttribute('data-theme');
     clearScrollMemory();
     currentPathname = '/';
+    markWelcomeSeenThisDocument();
   });
 
   it('preserves the wealth product search term while switching segments', async () => {
@@ -337,6 +357,7 @@ describe('logout cleanup', () => {
     document.documentElement.removeAttribute('data-theme');
     clearScrollMemory();
     currentPathname = '/';
+    markWelcomeSeenThisDocument();
   });
 
   it('clears session, business view state and scroll memory while keeping preferences', async () => {

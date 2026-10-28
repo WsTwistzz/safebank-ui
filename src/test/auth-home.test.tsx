@@ -25,15 +25,16 @@ function Probe() {
   return null;
 }
 
-function renderWelcome() {
+function renderWelcome(status: 'anonymous' | 'authenticated' = 'anonymous') {
   currentPath = '/welcome';
   return render(
-    <SessionProvider initialStatus="anonymous">
+    <SessionProvider initialStatus={status}>
       <MemoryRouter initialEntries={['/welcome']}>
         <Probe />
         <Routes>
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/login" element={<div>LOGIN_STUB</div>} />
+          <Route path="/" element={<div>HOME_STUB</div>} />
         </Routes>
       </MemoryRouter>
     </SessionProvider>,
@@ -126,6 +127,17 @@ describe('欢迎页', () => {
       expect(window.localStorage.getItem('sb-demo-session')).toBeNull();
       view.unmount();
     }
+  });
+
+  it('已登录用户仍看到欢迎页，点击继续使用直接回首页', async () => {
+    const user = userEvent.setup();
+    renderWelcome('authenticated');
+
+    expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '已有账户？登录' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '继续使用' }));
+
+    await waitFor(() => expect(currentPath).toBe('/'));
   });
 
   it('渲染 SafeBank 品牌、英文标题与中文说明', () => {

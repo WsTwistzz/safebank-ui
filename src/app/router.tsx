@@ -2,6 +2,7 @@ import { Navigate, Outlet, createBrowserRouter, useLocation } from 'react-router
 import type { RouteObject } from 'react-router-dom';
 import { StateView } from '../components/StateView';
 import { useSession } from './SessionProvider';
+import { hasSeenWelcomeThisDocument } from './welcomeLaunch';
 import { PATHS } from './paths';
 import { AppShellPrimary, AppShellSecondary } from '../layout/AppShell';
 import { WelcomePage } from '../pages/Welcome';
@@ -30,10 +31,14 @@ function ResolvingScreen() {
   );
 }
 
-/** 会话恢复前只显示加载态，防止任何具象页面闪现。 */
+/** 会话恢复前只显示加载态；恢复后每次整页加载先进入一次欢迎页。 */
 function SessionGate() {
   const { status } = useSession();
+  const location = useLocation();
   if (status === 'resolving') return <ResolvingScreen />;
+  if (!hasSeenWelcomeThisDocument() && location.pathname !== PATHS.welcome) {
+    return <Navigate to={PATHS.welcome} replace state={{ from: location.pathname }} />;
+  }
   return <Outlet />;
 }
 
@@ -48,11 +53,8 @@ function RequireAuth() {
   return <Outlet />;
 }
 
-/** 欢迎页只对「首次、未登录」可见；已登录或已访问则重定向。 */
+/** 欢迎页每次整页加载都会先展示；登录态由欢迎页决定“继续使用”的落点。 */
 function WelcomeGate() {
-  const { status, hasVisitedApp } = useSession();
-  if (status === 'authenticated') return <Navigate to={PATHS.home} replace />;
-  if (hasVisitedApp) return <Navigate to={PATHS.login} replace />;
   return <WelcomePage />;
 }
 

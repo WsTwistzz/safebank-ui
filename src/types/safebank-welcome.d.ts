@@ -10,6 +10,7 @@ declare global {
       'safebank-welcome': DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement> & {
         'login-url'?: string;
         'register-url'?: string;
+        mode?: 'anonymous' | 'authenticated';
       };
     }
   }

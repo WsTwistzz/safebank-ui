@@ -155,6 +155,8 @@
       -webkit-backdrop-filter: blur(12px);
       backdrop-filter: blur(12px); }
     .btn[data-pressed="true"] { transform: scale(0.97); }
+    :host([mode="authenticated"]) .btn-secondary { display: none; }
+    :host([mode="authenticated"]) .btn-primary { flex: 1; }
 
     /* 指针高光：幅度极小 */
     .glint { position: absolute; inset: -1px; pointer-events: none; opacity: var(--glint-opacity, 0);
@@ -211,10 +213,10 @@
 
         <div class="actions">
           <button type="button" class="btn btn-primary" data-target="login">
-            <span class="glint"></span>开始使用
+            <span class="glint"></span><span class="btn-label">开始使用</span>
           </button>
           <button type="button" class="btn btn-secondary" data-target="login">
-            <span class="glint"></span>已有账户？登录
+            <span class="glint"></span><span class="btn-label">已有账户？登录</span>
           </button>
         </div>
       </div>
@@ -222,6 +224,10 @@
   `;
 
   class SafeBankWelcome extends HTMLElement {
+    static get observedAttributes() {
+      return ['mode'];
+    }
+
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -255,6 +261,7 @@
       });
 
       this._syncLinks();
+      this._syncMode();
 
       this._observer = new ResizeObserver(() => {
         cancelAnimationFrame(this._resizeFrame);
@@ -331,6 +338,12 @@
       });
     }
 
+    _syncMode() {
+      const authenticated = this.getAttribute('mode') === 'authenticated';
+      const label = this.shadowRoot && this.shadowRoot.querySelector('.btn-primary .btn-label');
+      if (label) label.textContent = authenticated ? '继续使用' : '开始使用';
+    }
+
     _fit() {
       const width = this.clientWidth;
       const height = this.clientHeight;
@@ -343,6 +356,7 @@
 
     attributeChangedCallback() {
       if (this._buttons.length) this._syncLinks();
+      this._syncMode();
     }
 
     disconnectedCallback() {
