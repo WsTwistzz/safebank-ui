@@ -11,3 +11,6 @@ verify/
 Thumbs.db
 *.log
 coverage/
+
+# 测试时使用的可写临时目录（WorkBuddy 沙箱下 TMP 常不可写）
+.tmp-vitest/

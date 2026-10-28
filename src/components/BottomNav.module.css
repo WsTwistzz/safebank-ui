@@ -65,11 +65,15 @@
   font-weight: 500;
   line-height: 1.2;
   cursor: pointer;
-  transition: color 120ms var(--sb-ease-standard);
+  transition:
+    color var(--sb-duration-fast) var(--sb-ease-standard),
+    transform var(--sb-duration-spring) var(--sb-ease-spring);
 }
 
 .tab:active {
-  transform: scale(0.97);
+  transform: scale(0.94);
+  transition-duration: var(--sb-duration-press);
+  transition-timing-function: var(--sb-ease-ios);
 }
 
 .tabActive {
@@ -79,6 +83,20 @@
 
 .tabActive svg {
   stroke-width: 2.2;
+  /* 激活瞬间图标轻轻"落定"一下：1 → 1.14 → 1，只跑一次 */
+  animation: sb-tab-pop var(--sb-duration-spring) var(--sb-ease-spring);
+}
+
+@keyframes sb-tab-pop {
+  0% {
+    transform: scale(0.86);
+  }
+  55% {
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .agent {
@@ -107,17 +125,22 @@
   background: var(--sb-ink);
   color: var(--sb-gold);
   box-shadow: 0 8px 18px -6px rgba(17, 19, 24, 0.45);
-  transition: box-shadow 150ms var(--sb-ease-standard);
+  transition:
+    box-shadow var(--sb-duration-base) var(--sb-ease-ios),
+    transform var(--sb-duration-spring) var(--sb-ease-spring);
 }
 
 .agent:active .disc {
-  transform: scale(0.97);
+  transform: scale(0.94);
+  transition-duration: var(--sb-duration-press);
+  transition-timing-function: var(--sb-ease-ios);
 }
 
 .agentActive .disc {
   box-shadow:
     0 0 0 1.5px var(--sb-gold),
-    0 8px 18px -6px rgba(17, 19, 24, 0.45);
+    0 8px 18px -6px rgba(17, 19, 24, 0.45),
+    0 0 0 6px rgba(231, 215, 164, 0.12);
 }
 
 .hind {
@@ -144,5 +167,8 @@ html[data-theme='dark'] .hind {
   .tab:active,
   .agent:active .disc {
     transform: none;
+  }
+  .tabActive svg {
+    animation: none;
   }
 }

@@ -301,7 +301,7 @@ export function HomePage() {
       ) : null}
 
       {/* 资产 */}
-      <section className={h.hero} aria-label="总资产">
+      <section className={h.hero} aria-label="总资产" data-sb-sheen>
         <span className={h.watermark} aria-hidden="true">SAFE BANK</span>
         <span className={h.label}>Total balance · 总资产</span>
 

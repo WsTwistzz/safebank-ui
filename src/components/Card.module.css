@@ -7,6 +7,25 @@
   min-width: 0;
 }
 
+/* 可点击卡片：抬起 1px + 阴影加深，按下回缩；位移控制在 1px，避免"网页感" */
+.interactive {
+  transition:
+    transform var(--sb-duration-spring) var(--sb-ease-spring),
+    box-shadow var(--sb-duration-base) var(--sb-ease-ios);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sb-shadow-raised);
+  }
+}
+
+.interactive:active {
+  transform: scale(0.995);
+  transition-duration: var(--sb-duration-press);
+}
+
 .header {
   display: flex;
   align-items: flex-start;
@@ -82,8 +101,14 @@ button.listItem:hover:not(:disabled) {
   background: var(--sb-hover);
 }
 
+/* 按下：底色下沉 + 箭头右移 2px 再弹簧归位，是 iOS 列表行最典型的"可点"信号 */
 button.listItem:active:not(:disabled) {
-  background: var(--sb-pressed);
+  background: var(--sb-surface-sunken);
+}
+
+button.listItem:active:not(:disabled) .chevron {
+  transform: translateX(2px);
+  color: var(--sb-ink-2);
 }
 
 .listItem:disabled {
@@ -130,4 +155,7 @@ button.listItem:active:not(:disabled) {
 .chevron {
   flex: none;
   color: var(--sb-faint);
+  transition:
+    transform var(--sb-duration-spring) var(--sb-ease-spring),
+    color var(--sb-duration-fast) var(--sb-ease-standard);
 }

@@ -362,7 +362,7 @@ export function WealthPage() {
 
             {overview ? (
               <>
-                <div className={w.overview}>
+                <div className={w.overview} data-sb-sheen>
                   <div className={w.overviewTop}>
                     <div style={{ minWidth: 0 }}>
                       <span className={w.label}>投资总资产 · CNY</span>

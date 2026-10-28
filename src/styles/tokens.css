@@ -111,6 +111,23 @@
   --sb-ease-standard: cubic-bezier(0.2, 0.8, 0.3, 1);
   --sb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* ---- motion: iOS spring set (interaction upgrade) ----
+     press = 手指按下的即刻反馈；move = 位移/指示器滑动；spring 只用于“归位”类动作，
+     过冲控制在 2–4%，避免看起来像弹球。 */
+  --sb-duration-press: 90ms;
+  --sb-duration-move: 320ms;
+  --sb-duration-spring: 420ms;
+  --sb-ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --sb-ease-spring: cubic-bezier(0.34, 1.46, 0.64, 1);
+  --sb-ease-emphasized: cubic-bezier(0.2, 0.9, 0, 1);
+  --sb-press-scale: 0.972;
+  /* 按下时向内凹陷的高光/阴影，模拟实体按键被压进表面 */
+  --sb-shadow-press: inset 0 2px 5px rgba(17, 19, 24, 0.2), inset 0 0 0 1px rgba(17, 19, 24, 0.07);
+  --sb-shadow-gloss: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  /* 材质高光（卡片指针跟随 / 金色描边） */
+  --sb-sheen: rgba(231, 215, 164, 0.16);
+  --sb-sheen-strong: rgba(231, 215, 164, 0.34);
+
   /* ---- layout ---- */
   --sb-backdrop: #e6e6e0;
   --sb-app-max: 375px;
@@ -179,4 +196,10 @@ html[data-theme='dark'] {
   --sb-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 30px -24px rgba(0, 0, 0, 0.8);
   --sb-shadow-raised: 0 2px 8px rgba(0, 0, 0, 0.45), 0 22px 44px -28px rgba(0, 0, 0, 0.9);
   --sb-shadow-sheet: 0 -18px 50px rgba(0, 0, 0, 0.6);
+
+  /* 深色下按钮本身是浅色，凹陷阴影要压得更重，玻璃高光要更亮才看得出层次 */
+  --sb-shadow-press: inset 0 2px 6px rgba(0, 0, 0, 0.42), inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+  --sb-shadow-gloss: inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  --sb-sheen: rgba(231, 215, 164, 0.1);
+  --sb-sheen-strong: rgba(231, 215, 164, 0.22);
 }

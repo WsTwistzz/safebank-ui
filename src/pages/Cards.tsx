@@ -237,7 +237,7 @@ export function CardsPage() {
           {cards.map((card) => {
             const badge = statusBadge(card);
             return (
-              <div className={cstyles.card} key={card.id}>
+              <div className={cstyles.card} key={card.id} data-sb-sheen>
                 <div className={cstyles.cardHead}>
                   <span className={cstyles.cardTitle}>{card.name}</span>
                   <span className={`${cstyles.statusBadge} ${badge.cls}`}>{badge.text}</span>

@@ -58,6 +58,11 @@ textarea {
 
 button {
   cursor: pointer;
+  /* 交互升级：去掉移动端灰色点击块与双击缩放延迟，按下反馈只由 :active 承担 */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 button:disabled {

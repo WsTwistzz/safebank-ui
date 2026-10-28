@@ -129,7 +129,9 @@
   padding: 0 calc(14 * var(--u));
   border: 0;
   border-radius: calc(13 * var(--u));
-  background: var(--sb-ink);
+  /* 与共享 Button 一致：顶部一丝玻璃高光，远看仍是纯石墨 */
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 46%),
+    var(--sb-ink);
   color: var(--sb-surface);
   display: inline-flex;
   align-items: center;
@@ -137,7 +139,10 @@
   font-size: calc(10 * var(--u));
   font-weight: 650;
   white-space: nowrap;
-  box-shadow: 0 10px 18px -12px rgba(17, 19, 24, 0.6);
+  box-shadow: var(--sb-shadow-gloss), 0 10px 18px -12px rgba(17, 19, 24, 0.6);
+  transition:
+    transform var(--sb-duration-spring) var(--sb-ease-spring),
+    box-shadow var(--sb-duration-base) var(--sb-ease-ios);
 }
 
 .iconbtn {
@@ -149,11 +154,17 @@
   color: var(--sb-ink);
   display: grid;
   place-items: center;
+  transition:
+    transform var(--sb-duration-spring) var(--sb-ease-spring),
+    box-shadow var(--sb-duration-base) var(--sb-ease-ios);
 }
 
 .primary:active,
 .iconbtn:active {
-  transform: scale(0.97);
+  transform: scale(var(--sb-press-scale));
+  box-shadow: var(--sb-shadow-press);
+  transition-duration: var(--sb-duration-press);
+  transition-timing-function: var(--sb-ease-ios);
 }
 
 /* 待扣提醒 */

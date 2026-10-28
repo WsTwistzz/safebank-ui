@@ -9,11 +9,28 @@ export interface CardProps {
   footer?: ReactNode;
   children?: ReactNode;
   ariaLabel?: string;
+  /** 开启指针跟随的淡金高光；建议只给页面里最"贵"的那一两张主卡用。 */
+  sheen?: boolean;
+  /** 可点击/可聚焦的卡片：悬停轻微抬起，按下回缩。 */
+  interactive?: boolean;
 }
 
-export function Card({ title, meta, value, footer, children, ariaLabel }: CardProps) {
+export function Card({
+  title,
+  meta,
+  value,
+  footer,
+  children,
+  ariaLabel,
+  sheen = false,
+  interactive = false,
+}: CardProps) {
   return (
-    <section className={styles.card} aria-label={ariaLabel}>
+    <section
+      className={[styles.card, interactive ? styles.interactive : ''].filter(Boolean).join(' ')}
+      aria-label={ariaLabel}
+      data-sb-sheen={sheen ? '' : undefined}
+    >
       {title || value ? (
         <div className={styles.header}>
           <div className={styles.headText}>

@@ -13,8 +13,12 @@ import { AssistantServiceProvider } from './services/assistant/AssistantService'
 import { ProfileServiceProvider } from './services/profile/ProfileService';
 import { AuthServiceProvider } from './services/auth/AuthService';
 import { HomeServiceProvider } from './services/home/HomeService';
+import { useSheenPointer } from './app/useSheenPointer';
 
 export default function App() {
+  // 全局只挂一次：让带 data-sb-sheen 的表面跟随指针产生极淡的高光。
+  useSheenPointer();
+
   // 使用手动滚动恢复，避免浏览器原生 scrollRestoration 与我们按路径的恢复逻辑互相覆盖。
   useEffect(() => {
     try {

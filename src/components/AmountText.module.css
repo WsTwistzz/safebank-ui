@@ -16,6 +16,16 @@
   color: var(--sb-ink);
   line-height: var(--sb-leading-tight);
   white-space: nowrap;
+  /* 数字首次出现时从"虚焦"落定为实体，比直接闪现更有分量（不改变文本内容，不影响断言） */
+  animation: sb-amount-in var(--sb-duration-move) var(--sb-ease-ios);
+}
+
+@keyframes sb-amount-in {
+  from {
+    opacity: 0.001;
+    transform: translateY(3px);
+    filter: blur(3px);
+  }
 }
 
 .md {
