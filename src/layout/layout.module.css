@@ -4,7 +4,6 @@
   width: 100%;
   max-width: var(--sb-app-max);
   height: 100dvh;
-  max-height: var(--sb-app-height);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -15,12 +14,14 @@
   container-name: screen;
 }
 
-/* 桌面演示：居中的手机屏，不带金属外框 */
-@media (min-width: 376px) and (min-height: 813px) {
+/* 桌面演示：居中的手机屏（不加金属外框），四周留出中性底 */
+@media (min-width: 431px) {
   .page {
-    margin: 0 auto;
+    max-height: var(--sb-app-height);
     border-radius: 38px;
-    box-shadow: 0 34px 66px -22px rgba(17, 19, 24, 0.38);
+    box-shadow:
+      0 34px 66px -22px rgba(17, 19, 24, 0.38),
+      0 0 0 1px rgba(17, 19, 24, 0.06);
   }
 }
 

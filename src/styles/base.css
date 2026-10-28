@@ -11,19 +11,41 @@ body,
 }
 
 html {
-  background: var(--sb-canvas);
+  background: var(--sb-backdrop);
   -webkit-text-size-adjust: 100%;
 }
 
+/* 桌面预览：把 375×812 的手机屏居中，两侧留出中性底，避免看起来像未完成的窄条 */
 body {
   margin: 0;
-  background: var(--sb-canvas);
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--sb-backdrop);
   color: var(--sb-ink);
   font-family: var(--sb-font-sans);
   font-size: var(--sb-text-md);
   line-height: var(--sb-leading-normal);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* 真机/窄屏：铺满视口，不再留边 */
+@media (max-width: 430px) {
+  body {
+    display: block;
+  }
+
+  #root {
+    display: block;
+  }
 }
 
 button,

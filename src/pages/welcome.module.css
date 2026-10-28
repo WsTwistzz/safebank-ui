@@ -1,15 +1,29 @@
 /* 欢迎页：交付包 Web Component（Shadow DOM），单屏、无 BottomNav、无轮播。 */
 
 .page {
-  min-height: 100dvh;
+  position: relative;
+  width: 100%;
+  max-width: var(--sb-app-max);
+  height: 100dvh;
   display: flex;
   background: #efecff;
   overflow: hidden;
 }
 
+/* 桌面演示：与其它页面一致的居中手机屏外观 */
+@media (min-width: 431px) {
+  .page {
+    max-height: var(--sb-app-height);
+    border-radius: 38px;
+    box-shadow:
+      0 34px 66px -22px rgba(17, 19, 24, 0.38),
+      0 0 0 1px rgba(17, 19, 24, 0.06);
+  }
+}
+
 .screen {
   flex: 1;
-  min-height: 100dvh;
+  min-height: 0;
   min-width: 0;
   display: flex;
 }
@@ -20,7 +34,7 @@
   min-width: 0;
   min-height: 0;
   display: flex;
-  height: 100dvh;
+  height: 100%;
 }
 
 .host > safebank-welcome {
