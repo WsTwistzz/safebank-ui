@@ -3,6 +3,7 @@ import type { ReactNode, SVGProps } from 'react';
 export type IconName =
   | 'home'
   | 'assistant'
+  | 'agent-mark'
   | 'person'
   | 'chevron-left'
   | 'chevron-right'
@@ -18,6 +19,8 @@ export type IconName =
   | 'refresh'
   | 'plus'
   | 'card'
+  | 'bill'
+  | 'send'
   | 'chart'
   | 'info'
   | 'shield'
@@ -31,6 +34,14 @@ const paths: Record<IconName, ReactNode> = {
     <>
       <path d="M12 3.5l1.8 4.7 4.7 1.8-4.7 1.8L12 16.5l-1.8-4.7L5.5 10l4.7-1.8z" />
       <circle cx="18" cy="18" r="2.2" />
+    </>
+  ),
+  /** 目标简报 i-an：四角星 + 右上加号 + 左下小圆点 */
+  'agent-mark': (
+    <>
+      <path d="M12 4.125C12.75 8.625 14.25 10.5 18.75 12C14.25 13.5 12.75 15.375 12 19.875C11.25 15.375 9.75 13.5 5.25 12C9.75 10.5 11.25 8.625 12 4.125Z" />
+      <path d="M17.625 4.125v3M15.375 5.625h4.5" />
+      <circle cx="6" cy="17.625" r="1.275" />
     </>
   ),
   person: (
@@ -101,6 +112,13 @@ const paths: Record<IconName, ReactNode> = {
       <path d="M3 10h18" />
     </>
   ),
+  bill: (
+    <>
+      <path d="M5 3.5h14v17l-2.3-1.6-2.35 1.6L12 18.9l-2.35 1.6L7.3 18.9 5 20.5z" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+    </>
+  ),
+  send: <path d="M7 17 17 7M9 7h8v8" />,
   chart: (
     <>
       <path d="M4 19V5" />

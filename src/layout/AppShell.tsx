@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { BottomNav } from '../components/BottomNav';
 import type { NavKey } from '../components/BottomNav';
 import { TopBar } from '../components/TopBar';
+import { DynamicIsland, StatusBar } from '../components/StatusBar';
 import { useBack, useFocusMainOnPush, useScrollRestore } from '../app/hooks';
 import { PATHS, secondaryFallbackFor } from '../app/paths';
 import styles from './layout.module.css';
@@ -45,13 +46,17 @@ export function AppShellPrimary() {
   useScrollRestore(location.pathname);
   useFocusMainOnPush();
   const [title, subtitle] = titleFor(PRIMARY_TITLES, location.pathname);
+  // 首页在目标里没有额外顶栏，身份信息由页面内的头部承担
+  const showTopBar = location.pathname !== PATHS.home;
 
   return (
     <div className={styles.page}>
+      <DynamicIsland />
       <a className={styles.skip} href="#main-content">
         跳到主要内容
       </a>
-      <TopBar title={title} subtitle={subtitle} />
+      <StatusBar />
+      {showTopBar ? <TopBar title={title} subtitle={subtitle} /> : null}
       <main id="main-content" className={styles.main} tabIndex={-1}>
         <Outlet />
       </main>
@@ -72,9 +77,11 @@ export function AppShellSecondary() {
 
   return (
     <div className={styles.page}>
+      <DynamicIsland />
       <a className={styles.skip} href="#main-content">
         跳到主要内容
       </a>
+      <StatusBar />
       <TopBar title={title} subtitle={subtitle} onBack={back} backLabel="返回" />
       <main id="main-content" className={`${styles.main} ${styles.withoutNav}`} tabIndex={-1}>
         <Outlet />

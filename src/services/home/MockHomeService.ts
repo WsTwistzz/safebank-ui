@@ -27,6 +27,23 @@ export const DEFAULT_HOME_SCENARIO: MockHomeScenario = {
   emptyUpcoming: false,
 };
 
+/**
+ * 目标简报「默认正常场景」的展示数据。
+ * 仅用于让默认首页与界面简报逐项一致；失败/空/离线等场景仍走原有逻辑。
+ * 需要回到纯客户真实 mock 数据时，把构造参数 targetDefaults 设为 false。
+ */
+const TARGET_DEFAULTS = {
+  /** 张三：活期 6,000.00 + 储蓄 20,000.00 = 总资产 26,000.00 */
+  zhang: { currentCents: 600000, savingsCents: 2000000 },
+  upcoming: { count: 2, totalCents: 4500, sourceSummary: '云音乐、视频会员' },
+  recent: [
+    { id: 'tx-coffee', name: '山野咖啡', time: '今天 9:12', category: '餐饮', amountCents: -680, direction: 'out' as const },
+    { id: 'tx-studio', name: 'Studio North', time: '昨天', category: '项目款', amountCents: 185000, direction: 'in' as const },
+    { id: 'tx-market', name: '福玛超市', time: '昨天 18:34', category: '购物', amountCents: -4236, direction: 'out' as const },
+  ],
+  bill: { month: '10 月', expenseCents: 148624 },
+};
+
 export interface HomeDeps {
   auth: AuthService;
   transfer: TransferService;
@@ -44,8 +61,17 @@ export class MockHomeService implements HomeService {
   private recentFailedOnce = false;
   private billFailedOnce = false;
 
-  constructor(deps: HomeDeps, scenario?: Partial<MockHomeScenario>, delayMs = 200) {
+  /** 默认场景数据是否与目标简报一致；false 时完全使用客户 mock 数据 */
+  private targetDefaults: boolean;
+
+  constructor(
+    deps: HomeDeps,
+    scenario?: Partial<MockHomeScenario>,
+    delayMs = 200,
+    targetDefaults = true,
+  ) {
     this.deps = deps;
+    this.targetDefaults = targetDefaults;
     this.scenario = { ...DEFAULT_HOME_SCENARIO, ...scenario };
     this.delayMs = delayMs;
   }
@@ -83,8 +109,14 @@ export class MockHomeService implements HomeService {
 
     const accounts = await this.deps.transfer.listAccounts();
     const usable = accounts.filter((a) => customer.accountIds.includes(a.id));
-    const currentCents = usable.find((a) => a.id === 'acc-current')?.availableCents ?? 0;
-    const savingsCents = usable.find((a) => a.id === 'acc-savings')?.availableCents ?? 0;
+    let currentCents = usable.find((a) => a.id === 'acc-current')?.availableCents ?? 0;
+    let savingsCents = usable.find((a) => a.id === 'acc-savings')?.availableCents ?? 0;
+
+    // 目标简报默认场景：张三 活期 6,000.00 / 储蓄 20,000.00
+    if (this.targetDefaults && customerId === 'cust-zhang') {
+      currentCents = TARGET_DEFAULTS.zhang.currentCents;
+      savingsCents = TARGET_DEFAULTS.zhang.savingsCents;
+    }
 
     let wealthCents = 0;
     let holdingProductCount = 0;
@@ -119,6 +151,13 @@ export class MockHomeService implements HomeService {
     if (this.scenario.emptyUpcoming) {
       return { count: 0, totalCents: 0, sourceSummary: '' };
     }
+    if (this.targetDefaults) {
+      return {
+        count: TARGET_DEFAULTS.upcoming.count,
+        totalCents: TARGET_DEFAULTS.upcoming.totalCents,
+        sourceSummary: TARGET_DEFAULTS.upcoming.sourceSummary,
+      };
+    }
     const [charges, subs] = await Promise.all([
       this.deps.subscriptions.getUpcomingCharges(),
       this.deps.subscriptions.listSubscriptions(),
@@ -142,6 +181,7 @@ export class MockHomeService implements HomeService {
       throw new Error('模拟最近交易加载失败');
     }
     if (this.scenario.emptyRecent) return [];
+    if (this.targetDefaults) return TARGET_DEFAULTS.recent.map((t) => ({ ...t }));
     const months = await this.deps.bills.getAvailableMonths();
     const month = months[0];
     if (!month) return [];
@@ -166,6 +206,9 @@ export class MockHomeService implements HomeService {
     if (this.scenario.failBillOnce && !this.billFailedOnce) {
       this.billFailedOnce = true;
       throw new Error('模拟账单加载失败');
+    }
+    if (this.targetDefaults) {
+      return { month: TARGET_DEFAULTS.bill.month, expenseCents: TARGET_DEFAULTS.bill.expenseCents };
     }
     const months = await this.deps.bills.getAvailableMonths();
     const month = months[0];

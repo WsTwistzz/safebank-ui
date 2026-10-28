@@ -18,7 +18,8 @@ function readInitialTheme(): Theme {
   } catch {
     /* ignore */
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ? 'dark' : 'light';
+  // 与界面简报一致：默认正常态为浅色（石墨 × 香槟金）；深色由用户显式切换
+  return 'light';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

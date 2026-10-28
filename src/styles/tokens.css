@@ -112,7 +112,11 @@
   --sb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ---- layout ---- */
-  --sb-app-max: 480px;
+  --sb-app-max: 375px;
+  --sb-app-height: 812px;
+  --sb-sbar-h: 30px;
+  --sb-island-w: 64px;
+  --sb-island-h: 18px;
   --sb-touch-target: 44px;
   --sb-safe-bottom: env(safe-area-inset-bottom, 0px);
   --sb-safe-top: env(safe-area-inset-top, 0px);

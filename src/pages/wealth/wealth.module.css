@@ -26,12 +26,14 @@
 
 .bigAmount {
   display: block;
-  font-size: var(--sb-text-3xl);
+  font-size: clamp(24px, 8.6vw, 32px);
   font-weight: var(--sb-weight-bold);
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   line-height: var(--sb-leading-tight);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pnl {

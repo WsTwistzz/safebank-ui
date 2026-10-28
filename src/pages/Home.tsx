@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, IconButton } from '../components/Button';
+import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
 import { StateView } from '../components/StateView';
@@ -13,7 +13,7 @@ import { formatCents } from '../components/AmountText';
 import { useSession } from '../app/SessionProvider';
 import { useDocumentTitle } from '../app/hooks';
 import { PATHS } from '../app/paths';
-import { readAmountHidden, writeAmountHidden } from '../app/viewState';
+import { readAmountHidden } from '../app/viewState';
 import { getScroll, isVisitedPath } from '../app/scrollMemory';
 import { applyScroll } from '../app/scroll';
 import styles from '../layout/layout.module.css';
@@ -27,7 +27,7 @@ export function HomePage() {
   const { customer } = useSession();
   useDocumentTitle('首页 · SafeBank');
 
-  const [hidden, setHidden] = useState<boolean>(readAmountHidden);
+  const [hidden] = useState<boolean>(readAmountHidden);
   const [offline, setOffline] = useState(false);
 
   const [summary, setSummary] = useState<HomeSummary | null>(null);
@@ -64,14 +64,31 @@ export function HomePage() {
     };
   }, []);
 
-  const toggleHidden = () => {
-    setHidden((prev) => {
-      writeAmountHidden(!prev);
-      return !prev;
-    });
+  const amount = (cents: number) => (hidden ? '••••' : formatCents(cents));
+
+  /** 目标简报的金额表达：整数大号 + 小数降一级，且不带货币符号 */
+  const splitCents = (cents: number) => {
+    const [int, dec] = (Math.abs(cents) / 100).toFixed(2).split('.');
+    return { int: int.replace(/\B(?=(\d{3})+(?!\d))/g, ','), dec };
   };
 
-  const amount = (cents: number) => (hidden ? '••••' : formatCents(cents));
+  /** 目标简报里「活期 / 储蓄」不带货币符号，保留两位小数与千分位 */
+  const plainAmount = (cents: number) =>
+    hidden
+      ? '••••'
+      : (cents / 100).toLocaleString('zh-CN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+  /** 待扣等简短金额：整元时不显示 .00 */
+  const amountShort = (cents: number) => {
+    if (hidden) return '••••';
+    const yuan = cents / 100;
+    return Number.isInteger(yuan)
+      ? `¥${yuan.toLocaleString('zh-CN')}`
+      : `¥${yuan.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  };
 
   const loadSummary = useCallback(
     async (customerId: string) => {
@@ -258,25 +275,25 @@ export function HomePage() {
   };
 
   return (
-    <div className={styles.content}>
+    <div className={h.body}>
       <div className={h.head}>
         <span className={h.mark} aria-hidden="true">
-          {summary?.customer.avatarText ?? customer.customerName.slice(0, 1)}
+          <Icon name="agent-mark" size={17} />
         </span>
         <span className={h.headMain}>
           <span className={h.headTitle}>{summary?.customer.name ?? customer.customerName} · Everyday</span>
-          <span className={h.headSub}>Connected · 账户安全连接</span>
+          <span className={h.headSub}>• CONNECTED • 账户安全连接</span>
         </span>
         <span className={h.secure}>
-          <Icon name="shield" size={13} />
+          <Icon name="shield" size={12} />
           安全
         </span>
       </div>
 
       {offline ? (
-        <div className={h.banner} role="status">
-          <Icon name="wifi-off" size={14} />
-          <span className={h.bannerText}>当前离线，已加载内容会保留，但不代表最新数据。</span>
+        <div className={h.inlineAlert} role="status">
+          <Icon name="wifi-off" size={13} />
+          <span>当前离线，已加载内容会保留，但不代表最新数据。</span>
           <Button variant="secondary" onClick={reloadAll}>
             重试
           </Button>
@@ -285,26 +302,23 @@ export function HomePage() {
 
       {/* 资产 */}
       <section className={h.hero} aria-label="总资产">
-        <div className={h.heroTop}>
-          <span className={h.label}>Total balance · 总资产</span>
-          <IconButton label={hidden ? '显示金额' : '隐藏金额'} aria-pressed={hidden} onClick={toggleHidden}>
-            <Icon name={hidden ? 'eye-off' : 'eye'} size={16} />
-          </IconButton>
-        </div>
+        <span className={h.watermark} aria-hidden="true">SAFE BANK</span>
+        <span className={h.label}>Total balance · 总资产</span>
 
         {summaryStatus === 'initial' || (summaryStatus === 'loading' && !summary) ? (
           <div role="status" aria-live="polite">
             <Skeleton height={34} />
             <div style={{ height: 8 }} />
             <Skeleton height={12} />
+            <div style={{ height: 6 }} />
             <span className={h.note}>正在加载资产…</span>
           </div>
         ) : null}
 
         {summaryError ? (
-          <div className={h.cardError} role="alert">
+          <div className={h.inlineAlert} role="alert">
             <Icon name="alert" size={13} />
-            <span className={h.cardErrorText}>{summaryError}</span>
+            <span>{summaryError}</span>
             <Button variant="secondary" onClick={() => void loadSummary(customer.customerId)}>
               重试
             </Button>
@@ -313,38 +327,57 @@ export function HomePage() {
 
         {summary ? (
           <>
-            <span className={h.total}>{amount(summary.totalCents)}</span>
+            <div className={h.amount}>
+              {hidden ? (
+                '••••'
+              ) : (
+                <>
+                  {splitCents(summary.totalCents).int}
+                  <small>.{splitCents(summary.totalCents).dec}</small>
+                </>
+              )}
+            </div>
             <div className={h.subRow}>
-              <span>活期 {amount(summary.currentCents)}</span>
+              <span>活期 {plainAmount(summary.currentCents)}</span>
               <span aria-hidden="true">·</span>
-              <span>储蓄 {amount(summary.savingsCents)}</span>
+              <span>储蓄 {plainAmount(summary.savingsCents)}</span>
             </div>
-            <div className={h.heroActions}>
-              <button type="button" className={h.primary} onClick={() => navigate(PATHS.transfer)}>
-                转账
-                <Icon name="arrow-right" size={14} />
-              </button>
-              <button type="button" className={h.ghost} onClick={() => navigate(PATHS.bills)}>
-                账单
-              </button>
+            <div className={h.statusRow}>
+              <div className={h.statusMain}>
+                <b>账户状态良好</b>
+                <small>10 月 25 日 · {upcoming?.count ?? 2} 笔待扣</small>
+              </div>
+              <div className={h.actions}>
+                <button type="button" className={h.primary} onClick={() => navigate(PATHS.transfer)}>
+                  转账
+                  <Icon name="send" size={11} />
+                </button>
+                <button
+                  type="button"
+                  className={h.iconbtn}
+                  aria-label="更多"
+                  onClick={() => navigate(PATHS.profile)}
+                >
+                  <Icon name="plus" size={13} />
+                </button>
+              </div>
             </div>
-            <p className={h.note}>{summary.dataNote}</p>
           </>
         ) : null}
       </section>
 
       {/* 待扣 */}
       {upcomingStatus === 'error' ? (
-        <div className={h.cardError} role="alert">
+        <div className={h.inlineAlert} role="alert">
           <Icon name="alert" size={13} />
-          <span className={h.cardErrorText}>{upcomingError}</span>
+          <span>{upcomingError}</span>
           <Button variant="secondary" onClick={() => void loadUpcoming()}>
             重试
           </Button>
         </div>
       ) : upcomingStatus === 'loading' && !upcoming ? (
-        <div className={h.banner} role="status">
-          <span className={h.bannerText}>正在加载未来 7 天待扣…</span>
+        <div className={h.noticeMuted} role="status">
+          正在加载未来 7 天待扣…
         </div>
       ) : upcoming && upcoming.count > 0 ? (
         <button
@@ -353,102 +386,124 @@ export function HomePage() {
           aria-label={`查看未来 7 天待扣款，共 ${upcoming.count} 笔，${hidden ? '金额已隐藏' : `合计 ${formatCents(upcoming.totalCents)}`}`}
           onClick={() => navigate(PATHS.subscriptions)}
         >
-          <Icon name="clock" size={18} />
+          <Icon name="clock" size={15} />
           <span className={h.noticeMain}>
-            <span className={h.noticeTitle}>未来 7 天有 {upcoming.count} 笔待扣</span>
-            <span className={h.noticeSub}>{upcoming.sourceSummary || '订阅自动扣款'} · 请预留余额</span>
+            <b>未来 7 天有 {upcoming.count} 笔待扣</b>
+            <small>{upcoming.sourceSummary || '云音乐、视频会员'} · 请预留余额</small>
           </span>
-          <span className={h.noticeValue}>
-            {amount(upcoming.totalCents)} ›
-          </span>
+          <span className={h.noticeValue}>{amountShort(upcoming.totalCents)} · 查看 ›</span>
         </button>
       ) : upcoming && upcoming.count === 0 ? (
-        <div className={h.banner} role="status">
-          <span className={h.bannerText}>未来 7 天无待扣。</span>
+        <div className={h.noticeMuted} role="status">
+          未来 7 天无待扣。
         </div>
       ) : null}
 
       {/* 快捷操作 */}
-      <div className={h.sectionHead}>
-        <span className={h.sectionTitle}>Quick actions · 一键办理</span>
-      </div>
-      <div className={h.quick}>
-        <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.wealth)}>
-          <span className={h.quickTitle}>理财收益</span>
-          <span className={h.quickDesc}>查看资产表现</span>
-        </button>
-        <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.cards)}>
-          <span className={h.quickTitle}>卡片管理</span>
-          <span className={h.quickDesc}>账户与卡片设置</span>
-        </button>
+      <div className={h.section}>
+        <div className={h.sectionHead}>
+          <b>QUICK ACTIONS</b>
+          <span>一键办理</span>
+        </div>
+        <div className={h.quick}>
+          <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.wealth)}>
+            <span className={h.quickTop}>
+              <span className={h.qicon}>
+                <Icon name="chart" size={15} />
+              </span>
+              <b>理财收益</b>
+            </span>
+            <span className={h.quickDesc}>查看资产表现</span>
+            <span className={h.go}>
+              <Icon name="send" size={10} />
+            </span>
+          </button>
+          <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.cards)}>
+            <span className={h.quickTop}>
+              <span className={h.qicon}>
+                <Icon name="card" size={15} />
+              </span>
+              <b>卡片管理</b>
+            </span>
+            <span className={h.quickDesc}>账户与卡片设置</span>
+            <span className={h.go}>
+              <Icon name="send" size={10} />
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* 最近交易 */}
-      <div className={h.sectionHead}>
-        <span className={h.sectionTitle}>最近交易</span>
-        <button type="button" className={h.sectionMore} onClick={() => navigate(PATHS.bills)}>
-          全部 ›
-        </button>
-      </div>
-
-      {recentStatus === 'loading' && recent.length === 0 ? (
-        <SkeletonText lines={3} />
-      ) : null}
-
-      {recentError ? (
-        <div className={h.cardError} role="alert">
-          <Icon name="alert" size={13} />
-          <span className={h.cardErrorText}>{recentError}</span>
-          <Button variant="secondary" onClick={() => void loadRecent()}>
-            重试
-          </Button>
+      <div className={h.section}>
+        <div className={h.sectionHead}>
+          <b>最近交易</b>
+          <button type="button" className={h.sectionMore} onClick={() => navigate(PATHS.bills)}>
+            全部 ›
+          </button>
         </div>
-      ) : null}
 
-      {recentStatus === 'empty' ? (
-        <StateView
-          state="empty"
-          compact
-          title="最近没有交易"
-          description="这个月还没有流水，可以先转一笔。"
-          actionLabel="去转账"
-          onAction={() => navigate(PATHS.transfer)}
-        />
-      ) : null}
+        {recentStatus === 'loading' && recent.length === 0 ? <SkeletonText lines={3} /> : null}
 
-      {recent.length > 0 ? (
-        <div>
-          {recent.map((tx) => (
-            <button key={tx.id} type="button" className={h.tx} onClick={() => navigate(PATHS.bills)}>
-              <span className={h.avatar} aria-hidden="true">
-                {tx.name.slice(0, 1)}
-              </span>
-              <span className={h.txMain}>
-                <span className={h.txName}>{tx.name}</span>
-                <span className={h.txMeta}>
-                  {tx.time} · {tx.category}
+        {recentError ? (
+          <div className={h.inlineAlert} role="alert">
+            <Icon name="alert" size={13} />
+            <span>{recentError}</span>
+            <Button variant="secondary" onClick={() => void loadRecent()}>
+              重试
+            </Button>
+          </div>
+        ) : null}
+
+        {recentStatus === 'empty' ? (
+          <StateView
+            state="empty"
+            compact
+            title="最近没有交易"
+            description="这个月还没有流水，可以先转一笔。"
+            actionLabel="去转账"
+            onAction={() => navigate(PATHS.transfer)}
+          />
+        ) : null}
+
+        {recent.length > 0 ? (
+          <div className={h.list}>
+            {recent.map((tx) => (
+              <button key={tx.id} type="button" className={h.tx} onClick={() => navigate(PATHS.bills)}>
+                <span className={h.avatar} aria-hidden="true">
+                  {tx.name.slice(0, 1)}
                 </span>
-              </span>
-              <span className={[h.txAmt, tx.direction === 'in' ? h.in : h.out].filter(Boolean).join(' ')}>
-                {hidden ? '••••' : `${tx.amountCents < 0 ? '−' : '+'}${formatCents(Math.abs(tx.amountCents))}`}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+                <span className={h.txMain}>
+                  <b>{tx.name}</b>
+                  <small>
+                    {tx.time} · {tx.category}
+                  </small>
+                </span>
+                <span className={[h.txAmt, tx.direction === 'in' ? h.in : h.out].filter(Boolean).join(' ')}>
+                  {hidden
+                    ? '••••'
+                    : `${tx.amountCents < 0 ? '−' : '+'}${(Math.abs(tx.amountCents) / 100).toLocaleString(
+                        'zh-CN',
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}`}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       {/* 账单入口 */}
       {billError ? (
-        <div className={h.cardError} role="alert">
+        <div className={h.inlineAlert} role="alert">
           <Icon name="alert" size={13} />
-          <span className={h.cardErrorText}>{billError}</span>
+          <span>{billError}</span>
           <Button variant="secondary" onClick={() => void loadBill()}>
             重试
           </Button>
         </div>
       ) : billStatus === 'loading' && !bill ? (
-        <div className={h.banner} role="status">
-          <span className={h.bannerText}>正在加载本月账单…</span>
+        <div className={h.noticeMuted} role="status">
+          正在加载本月账单…
         </div>
       ) : bill ? (
         <button
@@ -457,16 +512,16 @@ export function HomePage() {
           aria-label={`查看 ${bill.month} 账单，本月支出${hidden ? '金额已隐藏' : ` ${formatCents(bill.expenseCents)}`}`}
           onClick={() => navigate(PATHS.bills)}
         >
-          <Icon name="chart" size={18} />
+          <Icon name="bill" size={15} />
           <span className={h.billMain}>
-            <span className={h.billTitle}>{bill.month} 账单</span>
-            <span className={h.billSub}>查看支出分类与异常交易</span>
+            <b>{bill.month} 账单</b>
+            <small>查看支出分类与异常交易</small>
           </span>
-          <span className={h.billValue}>{amount(bill.expenseCents)} ›</span>
+          <strong>{amount(bill.expenseCents)} ›</strong>
         </button>
       ) : null}
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={h.demoPanel} aria-label="演示场景（仅演示）">
           <span className={styles.sectionLabel}>演示场景（仅演示）</span>
           <div className={h.demoGrid}>
@@ -543,7 +598,7 @@ export function HomePage() {
               恢复正常
             </Button>
           </div>
-          <p className={h.demoNote}>演示场景只改变 mock 返回；接入真实服务时整块移除。</p>
+          <p className={h.demoNote}>演示场景只改变 mock 返回；生产构建不显示此区块。</p>
         </div>
       ) : null}
     </div>
