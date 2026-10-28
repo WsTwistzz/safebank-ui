@@ -123,3 +123,12 @@
   font-size: var(--sb-text-2xs);
   color: var(--sb-faint);
 }
+.card { padding:12px; border-radius:27px; background:var(--sb-surface-raised); gap:14px; }
+.cardFace { position:relative; isolation:isolate; overflow:hidden; padding:21px; min-height:205px; border-radius:20px; background:linear-gradient(130deg,#41413d,#1e2022 50%,#111318); color:#f5f1e7; box-shadow:inset 0 1px #ffffff29; display:flex; flex-direction:column; align-items:flex-start; }
+.cardArt { position:absolute; z-index:-1; right:7px; top:-77px; font-size:290px; line-height:1.4; font-weight:450; font-family:Georgia,serif; font-style:italic; color:#e7d7a40c; transform:rotate(-18deg); pointer-events:none; }
+.cardHead { width:100%; align-items:flex-start; }.cardTitle { font-size:13px; font-weight:500; }.statusBadge { font-size:10px; }
+.chip { display:grid; grid-template-columns:repeat(3,1fr); width:32px; height:25px; border-radius:6px; border:1px solid #e7d7a466; background:linear-gradient(135deg,#e7d7a444,#e7d7a418); margin:18px 0 13px; overflow:hidden; }
+.chip i { border-right:1px solid #e7d7a455; }.chip i:nth-child(2){border-top:8px double #e7d7a455;border-bottom:8px double #e7d7a455;}
+.cardNumber { font-size:19px; letter-spacing:.13em; color:#eeece5; }
+.statusRow { width:100%; justify-content:space-between; color:#bebbb2; margin-top:17px; font-size:10px; }.cardWordmark { font-size:14px; font-weight:550; letter-spacing:-.04em; color:#e7d7a4; }
+.cardMeta { display:flex; align-items:center; flex-wrap:wrap; gap:7px; padding:0 8px; font-size:11px; color:var(--sb-muted); }.ops { margin-top:0; padding:0 2px 3px; }.opBtn{ flex:1; font-size:12px; padding:0 9px; }

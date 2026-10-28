@@ -578,7 +578,7 @@ describe('小安 · 业务跳转与瞬时状态恢复', () => {
       JSON.stringify({ phase: 123, messages: 'oops', plan: 5, clarification: 'x', clarPhase: 9 }),
     );
     renderAssistant(mockAssistant());
-    expect(await screen.findByText('小安 · 银行智能体')).toBeInTheDocument();
+    expect(await screen.findByText('小安，随时为你。')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
     expect(screen.getByLabelText('告诉小安你的需求')).toHaveValue('');
   });

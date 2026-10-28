@@ -303,3 +303,4 @@
   font-size: var(--sb-text-xs);
   color: var(--sb-muted);
 }
+.phead { padding:14px 2px 23px; gap:14px; }.pav { width:58px; height:58px; border-radius:21px; color:var(--sb-gold); }.pname { font-size:24px; letter-spacing:-.04em; }.pmeta { margin-top:5px; font-size:11px; }

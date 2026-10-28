@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { BrandSymbol } from '../components/BrandSymbol';
 import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
+import { Sheet } from '../components/Sheet';
 import { Skeleton, SkeletonText } from '../components/Skeleton';
 import { StateView } from '../components/StateView';
 import { useHomeService } from '../services/home/HomeService';
@@ -13,7 +15,7 @@ import { formatCents } from '../components/AmountText';
 import { useSession } from '../app/SessionProvider';
 import { useDocumentTitle } from '../app/hooks';
 import { PATHS } from '../app/paths';
-import { readAmountHidden } from '../app/viewState';
+import { readAmountHidden, writeAmountHidden } from '../app/viewState';
 import { getScroll, isVisitedPath } from '../app/scrollMemory';
 import { applyScroll } from '../app/scroll';
 import styles from '../layout/layout.module.css';
@@ -27,7 +29,13 @@ export function HomePage() {
   const { customer } = useSession();
   useDocumentTitle('首页 · SafeBank');
 
-  const [hidden] = useState<boolean>(readAmountHidden);
+  const [hidden, setHidden] = useState<boolean>(readAmountHidden);
+  const [allocationOpen, setAllocationOpen] = useState(false);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'out' | 'in'>('all');
+  const togglePrivacy = () => setHidden((previous) => {
+    writeAmountHidden(!previous);
+    return !previous;
+  });
   const [offline, setOffline] = useState(false);
 
   const [summary, setSummary] = useState<HomeSummary | null>(null);
@@ -109,7 +117,7 @@ export function HomePage() {
         setSummaryStatus(summaryRef.current ? 'loaded' : 'error');
       }
     },
-    [home, summary],
+    [home],
   );
 
   const loadUpcoming = useCallback(async () => {
@@ -128,7 +136,7 @@ export function HomePage() {
       setUpcomingError('待扣加载失败');
       setUpcomingStatus(upcomingRef.current ? 'loaded' : 'error');
     }
-  }, [home, upcoming]);
+  }, [home]);
 
   const loadRecent = useCallback(async () => {
     const seq = ++recentSeq.current;
@@ -146,7 +154,7 @@ export function HomePage() {
       setRecentError('最近交易加载失败');
       setRecentStatus(recentRef.current.length === 0 ? 'error' : 'loaded');
     }
-  }, [home, recent]);
+  }, [home]);
 
   const loadBill = useCallback(async () => {
     const seq = ++billSeq.current;
@@ -164,7 +172,7 @@ export function HomePage() {
       setBillError('账单加载失败');
       setBillStatus(billRef.current ? 'loaded' : 'error');
     }
-  }, [home, bill]);
+  }, [home]);
 
   // 客户切换：立即作废旧请求并清空上一客户的事实数据；同一客户重试则保留已加载数据。
   const loadedCustomerRef = useRef<string | null>(null);
@@ -274,20 +282,28 @@ export function HomePage() {
     void loadBill();
   };
 
+  const holdingsCents = summary ? Math.max(0, summary.totalCents - summary.currentCents - summary.savingsCents) : 0;
+  const assets = summary ? [
+    { name: '活期', value: summary.currentCents, className: h.current },
+    { name: '储蓄', value: summary.savingsCents, className: h.savings },
+    ...(holdingsCents > 0 ? [{ name: '理财', value: holdingsCents, className: h.holdings }] : []),
+  ] : [];
+  const visibleTransactions = recent.filter(tx => transactionFilter === 'all' || tx.direction === transactionFilter);
+
   return (
     <div className={h.body}>
       <div className={h.head}>
         <span className={h.mark} aria-hidden="true">
-          <Icon name="agent-mark" size={17} />
+          <BrandSymbol width={34} height={34} />
         </span>
         <span className={h.headMain}>
-          <span className={h.headTitle}>{summary?.customer.name ?? customer.customerName} · Everyday</span>
-          <span className={h.headSub}>• CONNECTED • 账户安全连接</span>
+          <span className={h.headSub}>SafeBank · 日常账户</span>
+          <span className={h.headTitle}>你好，{summary?.customer.name ?? customer.customerName}</span>
         </span>
-        <span className={h.secure}>
-          <Icon name="shield" size={12} />
-          安全
-        </span>
+        <button type="button" className={h.secure} aria-label="查看账户与安全设置" onClick={() => navigate(PATHS.profile)}>
+          <Icon name="shield" size={17} />
+          <span>安全连接</span>
+        </button>
       </div>
 
       {offline ? (
@@ -301,9 +317,13 @@ export function HomePage() {
       ) : null}
 
       {/* 资产 */}
-      <section className={h.hero} aria-label="总资产" data-sb-sheen>
-        <span className={h.watermark} aria-hidden="true">SAFE BANK</span>
-        <span className={h.label}>Total balance · 总资产</span>
+      <section className={h.hero} aria-label="总资产">
+        <div className={h.heroTop}>
+          <span className={h.label}>总资产 <span>人民币</span></span>
+          <button type="button" className={h.privacy} onClick={togglePrivacy} aria-label={hidden ? '显示金额' : '隐藏金额'} aria-pressed={hidden}>
+            <Icon name={hidden ? 'eye-off' : 'eye'} size={18} />
+          </button>
+        </div>
 
         {summaryStatus === 'initial' || (summaryStatus === 'loading' && !summary) ? (
           <div role="status" aria-live="polite">
@@ -337,30 +357,19 @@ export function HomePage() {
                 </>
               )}
             </div>
-            <div className={h.subRow}>
-              <span data-testid="home-current">活期 {plainAmount(summary.currentCents)}</span>
-              <span aria-hidden="true">·</span>
-              <span data-testid="home-savings">储蓄 {plainAmount(summary.savingsCents)}</span>
+            <button type="button" className={h.allocationLink} onClick={() => setAllocationOpen(true)} aria-label="查看资产分布">
+              <span className={h.subRow}>
+                <span data-testid="home-current">活期 {plainAmount(summary.currentCents)}</span>
+                <span data-testid="home-savings">储蓄 {plainAmount(summary.savingsCents)}</span>
+              </span>
+              <Icon name="chevron-right" size={15} />
+            </button>
+            <div className={h.allocationTrack} aria-hidden="true">
+              {assets.map(asset => <span key={asset.name} className={asset.className} style={{ flex: Math.max(0, asset.value) }} />)}
             </div>
             <div className={h.statusRow}>
-              <div className={h.statusMain}>
-                <b>账户状态良好</b>
-                <small>10 月 25 日 · {upcoming?.count ?? 2} 笔待扣</small>
-              </div>
-              <div className={h.actions}>
-                <button type="button" className={h.primary} onClick={() => navigate(PATHS.transfer)}>
-                  转账
-                  <Icon name="send" size={11} />
-                </button>
-                <button
-                  type="button"
-                  className={h.iconbtn}
-                  aria-label="更多"
-                  onClick={() => navigate(PATHS.profile)}
-                >
-                  <Icon name="plus" size={13} />
-                </button>
-              </div>
+              <span className={h.accountState}><span /> 资金，由你掌控</span>
+              <button type="button" className={h.heroDetail} onClick={() => setAllocationOpen(true)}>资产详情 <Icon name="arrow-right" size={15} /></button>
             </div>
           </>
         ) : null}
@@ -399,39 +408,21 @@ export function HomePage() {
         </div>
       ) : null}
 
-      {/* 快捷操作 */}
-      <div className={h.section}>
-        <div className={h.sectionHead}>
-          <b>QUICK ACTIONS</b>
-          <span>一键办理</span>
-        </div>
-        <div className={h.quick}>
-          <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.wealth)}>
-            <span className={h.quickTop}>
-              <span className={h.qicon}>
-                <Icon name="chart" size={15} />
-              </span>
-              <b>理财收益</b>
-            </span>
-            <span className={h.quickDesc}>查看资产表现</span>
-            <span className={h.go}>
-              <Icon name="send" size={10} />
-            </span>
+      <div className={h.quick} aria-label="常用服务">
+        {([
+          ['send', '转账', PATHS.transfer], ['bill', '账单', PATHS.bills],
+          ['chart', '理财', PATHS.wealth], ['card', '卡片', PATHS.cards],
+        ] as const).map(([icon, label, path]) => (
+          <button key={path} type="button" className={h.quickCard} onClick={() => navigate(path)}>
+            <span className={h.qicon}><Icon name={icon} size={21} /></span><span>{label}</span>
           </button>
-          <button type="button" className={h.quickCard} onClick={() => navigate(PATHS.cards)}>
-            <span className={h.quickTop}>
-              <span className={h.qicon}>
-                <Icon name="card" size={15} />
-              </span>
-              <b>卡片管理</b>
-            </span>
-            <span className={h.quickDesc}>账户与卡片设置</span>
-            <span className={h.go}>
-              <Icon name="send" size={10} />
-            </span>
-          </button>
-        </div>
+        ))}
       </div>
+      <button type="button" className={h.assistantCard} onClick={() => navigate(PATHS.assistant)}>
+        <span className={h.assistantIcon}><Icon name="agent-mark" size={25} /></span>
+        <span className={h.assistantCopy}><b>复杂的事，交给小安。</b><small>说出需求，先看计划，再由你确认。</small></span>
+        <Icon name="arrow-right" size={18} />
+      </button>
 
       {/* 最近交易 */}
       <div className={h.section}>
@@ -442,6 +433,12 @@ export function HomePage() {
           </button>
         </div>
 
+        <div className={h.filters} role="group" aria-label="交易筛选">
+          {([['all', '全部'], ['out', '支出'], ['in', '收入']] as const).map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={transactionFilter === value} onClick={() => setTransactionFilter(value)}>{label}</button>
+          ))}
+        </div>
+        {recentStatus === 'loaded' && recent.length > 0 && visibleTransactions.length === 0 ? <p className={h.emptyFilter}>最近没有{transactionFilter === 'in' ? '收入' : '支出'}记录</p> : null}
         {recentStatus === 'loading' && recent.length === 0 ? <SkeletonText lines={3} /> : null}
 
         {recentError ? (
@@ -467,10 +464,10 @@ export function HomePage() {
 
         {recent.length > 0 ? (
           <div className={h.list}>
-            {recent.map((tx) => (
+            {visibleTransactions.map((tx) => (
               <button key={tx.id} type="button" className={h.tx} onClick={() => navigate(PATHS.bills)}>
                 <span className={h.avatar} aria-hidden="true">
-                  {tx.name.slice(0, 1)}
+                  <Icon name={tx.direction === 'in' ? 'send' : tx.category.includes('餐') ? 'card' : 'bill'} size={18} />
                 </span>
                 <span className={h.txMain}>
                   <b>{tx.name}</b>
@@ -601,6 +598,13 @@ export function HomePage() {
           <p className={h.demoNote}>演示场景只改变 mock 返回；生产构建不显示此区块。</p>
         </div>
       ) : null}
+      <Sheet open={allocationOpen} title="资产分布" description="当前账户的资产构成，金额单位为人民币。" onClose={() => setAllocationOpen(false)}>
+        <div className={h.sheetTotal}><span>总资产</span><strong>{summary ? amount(summary.totalCents) : '正在加载…'}</strong></div>
+        {assets.map(asset => <div key={asset.name} className={h.assetRow}>
+          <span className={`${h.assetDot} ${asset.className}`} /><span>{asset.name}</span><strong>{amount(asset.value)}</strong>
+        </div>)}
+        <p className={h.detailNote}>{summary?.dataNote || '以当前演示账户数据为准。'} 小安不会在未经你确认时执行资金操作。</p>
+      </Sheet>
     </div>
   );
 }

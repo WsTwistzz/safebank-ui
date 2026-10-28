@@ -17,7 +17,7 @@
 /* 桌面演示：居中的手机屏（不加金属外框），四周留出中性底 */
 @media (min-width: 431px) {
   .page {
-    max-height: var(--sb-app-height);
+    max-height: min(var(--sb-app-height), calc(100dvh - 40px));
     border-radius: 38px;
     box-shadow:
       0 34px 66px -22px rgba(17, 19, 24, 0.38),
@@ -31,7 +31,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 12px 8px;
+  padding: 8px 20px 16px;
   scrollbar-width: none;
 }
 

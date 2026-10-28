@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { BrandSymbol } from '../components/BrandSymbol';
 import { Button } from '../components/Button';
 import { useAuthService } from '../services/auth/AuthService';
 import type { DemoCustomer } from '../services/auth/types';
@@ -139,7 +140,7 @@ export function LoginPage() {
 
   const press = useCallback(
     (key: string) => {
-      if (busy || locked || offline) return;
+      if (busy || locked || offline || !selectedRef.current) return;
       if (key === 'del') {
         setPin((cur) => cur.slice(0, -1));
         setError(null);
@@ -163,7 +164,7 @@ export function LoginPage() {
   };
 
   const selected = customers.find((c) => c.customerId === selectedId) ?? null;
-  const disabled = busy || locked || offline;
+  const disabled = busy || locked || offline || !selectedId;
 
   const dots = useMemo(
     () =>
@@ -178,11 +179,11 @@ export function LoginPage() {
       <main id="main-content" className={styles.screen}>
         <div className={styles.brand}>
           <span className={styles.logo} aria-hidden="true">
-            SB
+            <BrandSymbol width={35} height={35} />
           </span>
           <span className={styles.brandText}>
             <span className={styles.brandName}>SafeBank</span>
-            <span className={styles.brandSub}>GATEWAY</span>
+            <span className={styles.brandSub}>安全银行服务</span>
           </span>
         </div>
 

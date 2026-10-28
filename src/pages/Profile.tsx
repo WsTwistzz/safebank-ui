@@ -677,7 +677,7 @@ export function ProfilePage() {
         </Button>
       </div>
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={p.demoPanel} aria-label="演示场景（仅演示）">
           <span className={styles.sectionLabel}>演示场景（仅演示）</span>
           <div className={p.demoGrid}>

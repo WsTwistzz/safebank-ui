@@ -378,7 +378,7 @@ export function SubscriptionsPage() {
         </div>
       ) : null}
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={sstyles.demoPanel} aria-label="演示场景（仅演示）">
           <span className={styles.sectionLabel}>演示场景（仅演示）</span>
           <div className={sstyles.demoGrid}>

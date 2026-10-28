@@ -517,7 +517,7 @@ export function AssistantPage() {
           <Icon name="assistant" size={20} />
         </span>
         <span className={a.headMain}>
-          <span className={a.headTitle}>小安 · 银行智能体</span>
+          <span className={a.headTitle}>小安，随时为你。</span>
           <span className={a.headSub}>
             {phase === 'PLANNING'
               ? '正在规划任务…'
@@ -528,8 +528,17 @@ export function AssistantPage() {
                   : '不会直接执行任何写操作'}
           </span>
         </span>
-        <span className={a.l2}>L2</span>
+        <span className={a.l2}>确认后执行</span>
       </div>
+
+      {phase === 'IDLE' && messages.length === 0 ? (
+        <div className={a.welcome}>
+          <span className={a.welcomeMark} aria-hidden="true"><Icon name="agent-mark" size={42} /></span>
+          <h1>少一点繁琐，<br />多一点从容。</h1>
+          <p>转账、账单、资金安排。<br />说说你想做的，小安先替你想清楚。</p>
+          <span className={a.safetyNote}><Icon name="shield" size={13} /> 你的确认，才是执行的开始</span>
+        </div>
+      ) : null}
 
       <div className={a.steps} aria-hidden="true">
         {steps.map((s) => (
@@ -880,7 +889,7 @@ export function AssistantPage() {
         <input
           id="assistant-input"
           className={a.input}
-          placeholder={offline ? '当前离线' : phase === 'CLARIFICATION' ? '输入新指令会取消本次澄清' : '例如：给王五转 3000 元'}
+          placeholder={offline ? '当前离线' : phase === 'CLARIFICATION' ? '输入新指令会取消本次澄清' : '告诉小安，你想做什么…'}
           value={input}
           disabled={offline}
           onChange={(e) => {
@@ -921,7 +930,7 @@ export function AssistantPage() {
         </div>
       ) : null}
 
-      {isMock ? (
+      {isMock && import.meta.env.DEV ? (
         <div className={a.demoPanel} aria-label="演示场景（仅演示）">
           <span className={styles.sectionLabel}>演示场景（仅演示）</span>
           <div className={a.demoGrid}>

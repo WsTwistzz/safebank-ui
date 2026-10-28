@@ -47,3 +47,7 @@
   height: var(--sb-touch-target);
   flex: none;
 }
+
+.topbar { background:var(--sb-canvas); border-bottom:0; padding:4px 18px 12px; min-height:64px; }
+.title { font-size:18px; letter-spacing:-.035em; }
+.subtitle { margin-top:2px; font-size:11px; }

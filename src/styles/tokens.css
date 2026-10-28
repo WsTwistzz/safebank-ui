@@ -61,9 +61,9 @@
   --sb-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
   --sb-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
-  --sb-text-2xs: 10px;
-  --sb-text-xs: 11px;
-  --sb-text-sm: 12px;
+  --sb-text-2xs: 11px;
+  --sb-text-xs: 12px;
+  --sb-text-sm: 13px;
   --sb-text-md: 14px;
   --sb-text-lg: 16px;
   --sb-text-xl: 20px;
@@ -94,7 +94,7 @@
   --sb-radius-xs: 6px;
   --sb-radius-sm: 10px;
   --sb-radius-md: 14px;
-  --sb-radius-lg: 18px;
+  --sb-radius-lg: 22px;
   --sb-radius-xl: 24px;
   --sb-radius-pill: 999px;
 
@@ -129,12 +129,12 @@
   --sb-sheen-strong: rgba(231, 215, 164, 0.34);
 
   /* ---- layout ---- */
-  --sb-backdrop: #e6e6e0;
-  --sb-app-max: 375px;
-  --sb-app-height: 812px;
-  --sb-sbar-h: 30px;
-  --sb-island-w: 64px;
-  --sb-island-h: 18px;
+  --sb-backdrop: #deded8;
+  --sb-app-max: 410px;
+  --sb-app-height: 860px;
+  --sb-sbar-h: 46px;
+  --sb-island-w: 88px;
+  --sb-island-h: 25px;
   --sb-touch-target: 44px;
   --sb-safe-bottom: env(safe-area-inset-bottom, 0px);
   --sb-safe-top: env(safe-area-inset-top, 0px);
