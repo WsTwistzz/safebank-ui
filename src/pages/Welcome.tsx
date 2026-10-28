@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useHref, useNavigate } from 'react-router-dom';
 import { useSession } from '../app/SessionProvider';
 import { useDocumentTitle } from '../app/hooks';
 import { PATHS } from '../app/paths';
@@ -16,6 +16,7 @@ interface NavigateDetail {
  */
 export function WelcomePage() {
   const navigate = useNavigate();
+  const loginHref = useHref(PATHS.login);
   const { markAppVisited } = useSession();
   const hostRef = useRef<HTMLDivElement | null>(null);
   useDocumentTitle('欢迎 · SafeBank');
@@ -26,12 +27,11 @@ export function WelcomePage() {
 
     const onNavigate = (event: Event) => {
       const custom = event as CustomEvent<NavigateDetail>;
-      // 接管跳转：不离开 SPA，也不依赖组件写死的 href
+      if (custom.detail?.target !== 'login' && custom.detail?.target !== 'register') return;
+      // 当前原型共用演示客户入口；保留意图以便后续接入独立注册流程。
       event.preventDefault();
       markAppVisited();
-      navigate(PATHS.login, { replace: true });
-      // 保留 detail 以便将来区分登录/注册
-      void custom.detail;
+      navigate(PATHS.login, { replace: true, state: { intent: custom.detail.target } });
     };
 
     host.addEventListener('safebank-navigate', onNavigate as EventListener);
@@ -42,7 +42,11 @@ export function WelcomePage() {
     <div className={styles.page}>
       <main id="main-content" className={styles.screen}>
         <div ref={hostRef} className={styles.host}>
-          <safebank-welcome login-url="/login" register-url="/login" />
+          <safebank-welcome
+            aria-label="SafeBank 欢迎页"
+            login-url={loginHref}
+            register-url={loginHref}
+          />
         </div>
       </main>
     </div>

@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -20,8 +20,11 @@ import { MockTransferService } from '../services/transfer/MockTransferService';
 import { MockWealthService } from '../services/wealth/MockWealthService';
 
 let currentPath = '/';
+let currentIntent: unknown;
 function Probe() {
-  currentPath = useLocation().pathname;
+  const location = useLocation();
+  currentPath = location.pathname;
+  currentIntent = (location.state as { intent?: unknown } | null)?.intent;
   return null;
 }
 
@@ -109,34 +112,42 @@ describe('欢迎页', () => {
     currentPath = '/welcome';
   });
 
-  it('三个入口都只标记已访问并进入登录，不建立会话', async () => {
-    for (const label of ['开始使用', '跳过引导']) {
-      window.localStorage.clear();
-      const user = userEvent.setup();
-      const view = renderWelcome();
-      await user.click(screen.getByRole('button', { name: label }));
-      await waitFor(() => expect(currentPath).toBe('/login'));
-      expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
-      expect(window.localStorage.getItem('sb-demo-session')).toBeNull();
-      view.unmount();
-    }
-  });
-
-  it('「已有账户？登录」同样进入登录且不建立会话', async () => {
-    const user = userEvent.setup();
+  it.each(['login', 'register'] as const)('%s 入口保留意图、标记已访问并进入演示登录，不建立会话', (target) => {
     renderWelcome();
-    await user.click(screen.getByRole('button', { name: /已有账户/ }));
-    await waitFor(() => expect(currentPath).toBe('/login'));
+    const welcome = screen.getByLabelText('SafeBank 欢迎页');
+    const event = new CustomEvent('safebank-navigate', {
+      detail: { target, href: '/login' }, bubbles: true, composed: true, cancelable: true,
+    });
+    fireEvent(welcome, event);
+    expect(event.defaultPrevented).toBe(true);
+    expect(currentPath).toBe('/login');
+    expect(currentIntent).toBe(target);
+    expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
     expect(window.localStorage.getItem('sb-demo-session')).toBeNull();
   });
 
-  it('渲染品牌、英文标题与中文说明', () => {
+  it('提供独立欢迎组件且不加载首页导航', () => {
     renderWelcome();
-    expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument();
-    expect(screen.getByText(/Take control of/)).toBeInTheDocument();
-    expect(screen.getByText(/账户、转账与理财/)).toBeInTheDocument();
-    expect(screen.getByText('GATEWAY')).toBeInTheDocument();
+    const welcome = screen.getByLabelText('SafeBank 欢迎页');
+    expect(welcome.tagName).toBe('SAFEBANK-WELCOME');
+    expect(welcome).toHaveAttribute('login-url', '/login');
+    expect(welcome).toHaveAttribute('register-url', '/login');
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
+
+  it('子目录下两个原生链接均保留部署前缀', () => {
+    render(
+      <SessionProvider initialStatus="anonymous">
+        <MemoryRouter basename="/safebank-ui" initialEntries={['/safebank-ui/welcome']}>
+          <WelcomePage />
+        </MemoryRouter>
+      </SessionProvider>,
+    );
+    const welcome = screen.getByLabelText('SafeBank 欢迎页');
+    expect(welcome).toHaveAttribute('login-url', '/safebank-ui/login');
+    expect(welcome).toHaveAttribute('register-url', '/safebank-ui/login');
+  });
+
 });
 
 describe('演示认证 service', () => {

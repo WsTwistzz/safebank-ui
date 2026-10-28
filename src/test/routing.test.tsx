@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useRoutes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -114,7 +114,7 @@ describe('cold start', () => {
 
   it('first launch with no session goes to /welcome', async () => {
     renderRouter(['/']);
-    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByLabelText('SafeBank 欢迎页')).toBeInTheDocument());
   });
 
   it('visited but no session goes to /login', async () => {
@@ -157,13 +157,16 @@ describe('navigation', () => {
     currentPathname = '/';
   });
 
-  it('welcome action writes visited flag and goes to /login', async () => {
-    const user = userEvent.setup();
+  it.each(['login', 'register'] as const)('welcome %s entry writes visited flag and enters demo login', async (target) => {
     renderRouter(['/']);
-    await waitFor(() => expect(screen.getByText('WELCOME TO SAFE BANK')).toBeInTheDocument());
+    const welcome = await screen.findByLabelText('SafeBank 欢迎页');
+    const event = new CustomEvent('safebank-navigate', {
+      detail: { target, href: 'https://example.com/ignored' },
+      bubbles: true, composed: true, cancelable: true,
+    });
+    fireEvent(welcome, event);
 
-    await user.click(screen.getByRole('button', { name: '开始使用' }));
-
+    expect(event.defaultPrevented).toBe(true);
     expect(window.localStorage.getItem('sb-has-visited')).toBe('1');
     expect(screen.getByText('选择演示客户')).toBeInTheDocument();
     expect(currentPathname).toBe('/login');
